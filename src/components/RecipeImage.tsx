@@ -14,11 +14,10 @@ export function RecipeImage({ recipe, variant = 'card', priority = false, classN
   const photo = src && !failed;
   return (
     <div className={`dish-media relative overflow-hidden ${className}`} style={{ ['--tint' as string]: recipe.tint }}>
-      {(!photo || !loaded) && (
-        <div className="dish-fallback absolute inset-0 grid place-items-center" aria-hidden="true">
-          <Plate emoji={recipe.emoji} tint={recipe.tint} size={plateSize ?? (variant === 'hero' ? 132 : 76)} />
-        </div>
-      )}
+      {/* the illustration stays underneath, so the photo fades in over it instead of over a blank box */}
+      <div className="dish-fallback absolute inset-0 grid place-items-center" aria-hidden="true">
+        <Plate emoji={recipe.emoji} tint={recipe.tint} size={plateSize ?? (variant === 'hero' ? 132 : 76)} />
+      </div>
       {photo && (
         <img src={src} alt={recipe.photoAlt} width={variant === 'hero' ? 1600 : 800} height={variant === 'hero' ? 1200 : 600}
           loading={priority ? 'eager' : 'lazy'} decoding="async" fetchPriority={priority ? 'high' : 'auto'}
