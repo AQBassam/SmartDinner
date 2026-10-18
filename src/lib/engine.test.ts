@@ -241,6 +241,13 @@ describe('import & migration', () => {
   it('a corrupt store never bricks the app; legacy keys are picked up', () => {
     const corrupt = { getItem: (k: string) => (k === STORAGE_KEY ? '{"schemaVersion":3,' : null) };
     expect(loadState(corrupt).state.schemaVersion).toBe(3);
+    // one invalid price record or field must not wipe the family's plan
+    const fam = { ...defaultState(), household: { adults: 3, teens: 0, kids: 2 }, stock: { rice: 1500 }, favorites: ['foul'],
+      priceBook: [{ id: 'bad_id!', ing: 'eggs', store: 'nesto', product: 'x', sold: { type: 'pack', size: 30, label: 'طبق' }, value: 1.9, type: 'manual', checkedAt: '2026-10-19' }],
+      appetite: 7 };
+    const kept = loadState({ getItem: (k: string) => (k === STORAGE_KEY ? JSON.stringify(fam) : null) }).state;
+    expect([kept.household.adults, kept.stock.rice, kept.favorites, kept.priceBook.length, kept.appetite]).toEqual([3, 1500, ['foul'], 0, 1]);
+    expect(() => importBackup(JSON.stringify(fam))).toThrow(); // files from outside stay all-or-nothing
     const legacy = { getItem: (k: string) => (k === 'smartDinnerApp_v2' ? JSON.stringify(fixture) : null) };
     const r = loadState(legacy);
     expect([r.migratedFrom, r.state.household.adults]).toEqual(['html-v2', 6]);
@@ -255,9 +262,10 @@ describe('exports', () => {
     const ics = buildIcs(ev, new Date('2026-10-18T05:00:00Z'));
     expect(ics.match(/BEGIN:VEVENT/g)).toHaveLength(ev.length);
     expect(ics.match(/BEGIN:VALARM/g)).toHaveLength(ev.length);
-    expect(ics).toContain('DTSTART:20261019T170000'); // shopping, day before night 1
-    expect(ics).toContain('DTSTART:20261019T213000'); // tonight-tasks for night 1
-    expect(ics).toContain('DTSTART:20261020T161500'); // «what's for dinner» answered, night 1
+    expect(ics).toContain('DTSTART;TZID=Asia/Muscat:20261019T170000'); // shopping, day before night 1
+    expect(ics).toContain('DTSTART;TZID=Asia/Muscat:20261019T213000'); // tonight-tasks for night 1
+    expect(ics).toContain('DTSTART;TZID=Asia/Muscat:20261020T161500'); // «what's for dinner» answered, night 1
+    expect(ics).toContain('BEGIN:VTIMEZONE');
     const enc = new TextEncoder();
     for (const l of ics.split('\r\n')) expect(enc.encode(l).length).toBeLessThanOrEqual(75);
     const long = 'SUMMARY:' + 'إذابة صدور الدجاج '.repeat(10);

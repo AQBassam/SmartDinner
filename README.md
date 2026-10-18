@@ -23,6 +23,8 @@ npx tsx scripts/report.ts 5          # تقرير تدقيق: كل الدفعا�
 python3 scripts/images.py photos/    # صور الوصفات: photos/<id>.jpg + credits.json ← public/recipes/*.webp + src/data/images.json (انظر docs/Recipe_Photo_Brief.md)
 python3 tests/e2e.py dist shots/     # اختبارات المتصفح تحت سياسة CSP الإنتاجية (بساعة مثبتة)
 python3 tests/ui_audit.py dist shots/audit   # تدقيق التخطيط: نص مغطّى أو مقصوص، تمرير أفقي، مساحات لمس، بعرضي 360 و1280
+bash tests/build_next.sh /tmp/next && npm run build && python3 tests/realuse.py dist /tmp/next shots/realuse   # الاستخدام الواقعي
+python3 scripts/og-image.py [recipe-id]   # صورة المشاركة public/og-image.jpg (1200×630)
 ```
 
 ## البنية

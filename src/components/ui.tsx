@@ -72,7 +72,7 @@ const toneCls: Record<Tone, string> = {
   ok: 'bg-ok-soft text-ok',
   warn: 'bg-warn-soft text-warn',
   ice: 'bg-ice-soft text-ice',
-  muted: 'bg-sand-2 text-muted',
+  muted: 'bg-sand-2 text-[#5c554d]', // text-muted on sand-2 is 4.47:1, just under AA
   danger: 'bg-danger-soft text-danger',
 };
 export function Badge({ tone = 'muted', children, icon }: { tone?: Tone; children: ReactNode; icon?: string }) {
@@ -175,23 +175,27 @@ export function Sheet({ open, onClose, title, children, wide = false }: { open: 
 }
 
 // ---------------------------------------------------------------- toast
-const ToastCtx = createContext<(msg: string) => void>(() => {});
+export interface ToastAction { label: string; run: () => void }
+const ToastCtx = createContext<(msg: string, action?: ToastAction) => void>(() => {});
 export const useToast = () => useContext(ToastCtx);
 export function ToastProvider({ children }: { children: ReactNode }) {
-  const [msg, setMsg] = useState<string | null>(null);
+  const [msg, setMsg] = useState<{ text: string; action?: ToastAction } | null>(null);
   const timer = useRef<number>(0);
-  const show = useCallback((m: string) => {
-    setMsg(m);
+  const show = useCallback((text: string, action?: ToastAction) => {
+    setMsg({ text, action });
     window.clearTimeout(timer.current);
-    timer.current = window.setTimeout(() => setMsg(null), 2800);
+    timer.current = window.setTimeout(() => setMsg(null), action ? 7000 : 2800);
   }, []);
   return (
     <ToastCtx.Provider value={show}>
       {children}
       <div aria-live="polite" role="status" className="no-print">
         {msg && (
-          <div className="toast-in fixed bottom-[calc(env(safe-area-inset-bottom)+88px)] left-1/2 z-[60] max-w-[calc(100%-32px)] -translate-x-1/2 rounded-2xl bg-teal-deep px-4 py-3 text-center text-[14px] text-white shadow-lg">
-            {msg}
+          <div className="on-dark toast-in fixed bottom-[calc(env(safe-area-inset-bottom)+88px)] left-1/2 z-[60] flex max-w-[calc(100%-32px)] -translate-x-1/2 items-center gap-3 rounded-2xl bg-teal-deep px-4 py-2.5 text-[14px] text-white shadow-lg lg:bottom-6">
+            <span className="py-1">{msg.text}</span>
+            {msg.action && (
+              <button className="min-h-9 shrink-0 rounded-xl bg-white/15 px-3 font-bold" onClick={() => { msg.action!.run(); setMsg(null); }}>{msg.action.label}</button>
+            )}
           </div>
         )}
       </div>

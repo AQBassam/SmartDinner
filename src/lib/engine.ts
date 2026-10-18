@@ -378,3 +378,32 @@ export function commonBasket(cmp: StoreComparison[]): CommonBasket | null {
   for (const c of priced) totals[c.store] = ings.reduce((sum, id) => sum + c.ownCost[id], 0);
   return { stores: priced.map((c) => c.store), ings, totals };
 }
+
+export interface DishCost {
+  /** consumption cost of one dinner of this dish: Σ (quantity eaten × unit price), no pack rounding, staples excluded */
+  cost: number;
+  priced: number;
+  items: number;
+  /** share of the cost resting on documented (verified) prices */
+  verifiedShare: number;
+}
+
+/** What one dinner of this dish eats, priced the same way as the budget's consumption figure. */
+export function dishCost(recipeId: string, plan: Pick<PlanInput, 'servings' | 'optionalOff' | 'priceBook' | 'storeMode' | 'today'>): DishCost {
+  const recipe = RECIPE[recipeId];
+  const off = new Set(plan.optionalOff);
+  let cost = 0, verified = 0, priced = 0, items = 0;
+  for (const it of recipe?.items ?? []) {
+    if (it.opt && off.has(`${recipeId}:${it.i}`)) continue;
+    const ing = ING[it.i];
+    if (!ing || ing.nobuy || ing.cat === 'staples' || ing.unit === 'none' || it.q === undefined) continue;
+    items++;
+    const price = resolvePrice(ing, plan.priceBook, plan.storeMode, plan.today);
+    if (price.value === null) continue;
+    priced++;
+    const c = scaledQty(ing, it.q, plan.servings) * unitCost(ing, price.sold, price.value);
+    cost += c;
+    if (price.source === 'verified') verified += c;
+  }
+  return { cost, priced, items, verifiedShare: cost > 0 ? verified / cost : 0 };
+}

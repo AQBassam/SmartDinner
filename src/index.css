@@ -46,7 +46,9 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 button { cursor: pointer; }
-:focus-visible { outline: 3px solid var(--color-teal-bright); outline-offset: 2px; border-radius: 10px; }
+:root { --focus-ring: #1e4a33; } /* plain custom property: @theme tokens that no utility uses are not emitted */
+.on-dark { --focus-ring: #e6b247; }
+:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; border-radius: 10px; }
 input[type='date'] { min-height: 44px; }
 /* Component classes live in a layer so Tailwind utilities on the same element (w-24, mx-auto...) win. */
 @layer components {

@@ -22,14 +22,14 @@
 ## التثبيت على الخادم
 
 ```bash
-V=3.4.2
+V=3.5.0
 cd /root
 curl -fLO https://github.com/AQBassam/SmartDinner/releases/download/v$V/dinner-release-$V.tar.gz
 curl -fLO https://github.com/AQBassam/SmartDinner/releases/download/v$V/dinner-release-$V.tar.gz.sha256
 sha256sum -c dinner-release-$V.tar.gz.sha256          # المتوقع: OK
 tar -xzf dinner-release-$V.tar.gz && cd dinner-release-$V
 bash deploy/install.sh                                  # تحقق الملفات، ثم تبديل current، ثم nginx -t وإعادة التحميل
-bash deploy/verify.sh                                   # المتوقع: 13 ناجح
+bash deploy/verify.sh                                   # المتوقع: 14 ناجح
 ```
 
 **التراجع:** `bash deploy/rollback.sh` يعيد الرابط `current` إلى الإصدار السابق في ثانية.

@@ -6,9 +6,11 @@ import { Plate } from './ui';
  * The dish, as a photo when one is registered (scripts/images.py), otherwise an illustrated panel in the
  * dish's own colour with its plate. Same box either way, so nothing jumps when a photo arrives or fails.
  */
-export function RecipeImage({ recipe, variant = 'card', priority = false, className = '', plateSize }:
-  { recipe: Recipe; variant?: 'card' | 'hero'; priority?: boolean; className?: string; plateSize?: number }) {
+export function RecipeImage({ recipe, variant = 'card', priority = false, className = '', plateSize, sizes = '(min-width: 768px) 50vw, 100vw' }:
+  { recipe: Recipe; variant?: 'card' | 'hero'; priority?: boolean; className?: string; plateSize?: number; sizes?: string }) {
   const src = photoUrl(recipe.id, variant);
+  // a hero lets the browser take the 800 px card file when the box is small enough (most phones at 2×)
+  const srcSet = variant === 'hero' && src ? `${photoUrl(recipe.id, 'card')} 800w, ${src} 1600w` : undefined;
   const [failed, setFailed] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const photo = src && !failed;
@@ -19,7 +21,7 @@ export function RecipeImage({ recipe, variant = 'card', priority = false, classN
         <Plate emoji={recipe.emoji} tint={recipe.tint} size={plateSize ?? (variant === 'hero' ? 132 : 76)} />
       </div>
       {photo && (
-        <img src={src} alt={recipe.photoAlt} width={variant === 'hero' ? 1600 : 800} height={variant === 'hero' ? 1200 : 600}
+        <img src={src} srcSet={srcSet} sizes={srcSet ? sizes : undefined} alt={recipe.photoAlt} width={variant === 'hero' ? 1600 : 800} height={variant === 'hero' ? 1200 : 600}
           loading={priority ? 'eager' : 'lazy'} decoding="async" fetchPriority={priority ? 'high' : 'auto'}
           onLoad={() => setLoaded(true)} onError={() => setFailed(true)}
           className={`dish-photo absolute inset-0 size-full object-cover transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`} />

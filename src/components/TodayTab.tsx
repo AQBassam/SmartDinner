@@ -67,12 +67,12 @@ export function TodayTab({ store, today, openRecipe, cook, go, browse }: Props) 
   const options = tonight ? emergencyOptions(state.nights, tonight.night - 1) : [];
 
   // ---------------------------------------------------------------- the day's sections, in time order
-  type Section = { id: string; time: string; node: ReactNode };
+  type Section = { id: string; time: string; label: string; tasks: DayTask[]; node: ReactNode };
   const sections: Section[] = [];
   if (shopBatch) {
     const toBuy = shopBatch.lines.filter(needsBuying);
     sections.push({
-      id: 'shop', time: state.shopTime,
+      id: 'shop', time: state.shopTime, label: 'مهام التسوق', tasks: day!.shop,
       node: (
         <Group time={state.shopTime} lead={<Glyph emoji="🛒" bg="var(--color-saffron-soft)" size={44} />}
           title="التسوق اليوم" sub={`${arCount(toBuy.length, ['صنف', 'صنفان', 'أصناف', 'صنفًا'])} لعشاءات ${relRange(shopBatch.firstNight, shopBatch.lastNight)}`}>
@@ -96,7 +96,7 @@ export function TodayTab({ store, today, openRecipe, cook, go, browse }: Props) 
   }
   if (tonightR && day!.afternoon.length > 0) {
     sections.push({
-      id: 'ask', time: state.times.ask,
+      id: 'ask', time: state.times.ask, label: 'بعد الغداء', tasks: day!.afternoon,
       node: (
         <Group time={state.times.ask} lead={<Plate emoji={tonightR.emoji} tint={tonightR.tint} size={44} />}
           title={`بعد الغداء، لـ${tonightR.title}`} sub={`${mins(minutesOf(day!.afternoon))} الآن تختصر وقت الطهي`}>
@@ -108,7 +108,7 @@ export function TodayTab({ store, today, openRecipe, cook, go, browse }: Props) 
   if (day && tomorrowR) {
     const ahead = minutesOf(day.evening.filter((t) => t.kind === 'prep'));
     sections.push({
-      id: 'prep', time: state.times.prep,
+      id: 'prep', time: state.times.prep, label: 'تجهيز عشاء الغد', tasks: day.evening,
       node: (
         <Group time={state.times.prep} lead={<Plate emoji={tomorrowR.emoji} tint={tomorrowR.tint} size={44} />}
           title={`جهّز الليلة لعشاء الغد: ${tomorrowR.title}`}
@@ -131,6 +131,7 @@ export function TodayTab({ store, today, openRecipe, cook, go, browse }: Props) 
     if (!tonight) return;
     const idx = tonight.night - 1;
     const moved = state.nights[idx];
+    const before = { nights: state.nights, prepDone: state.prepDone };
     set((s) => {
       const nights = applyEmergency(s.nights, idx, rid, MAX_NIGHTS);
       let prepDone = s.prepDone;
@@ -142,16 +143,18 @@ export function TodayTab({ store, today, openRecipe, cook, go, browse }: Props) 
     });
     setSosOpen(false);
     setForgot(false);
-    toast(`الليلة: ${RECIPE[rid].title}. ${RECIPE[moved].title} غدًا.`);
+    toast(`الليلة: ${RECIPE[rid].title}. ${RECIPE[moved].title} غدًا.`, { label: 'تراجع', run: () => set(before) });
   };
 
   // the next dinners after tonight, and dishes worth trying that are not in the plan
-  const upcoming = state.nights.map((rid, i) => ({ rid, night: i + 1, date: gen.nightDates[i] })).filter((x) => x.date > today).slice(0, 3);
+  const heroNight = tonight ? tonight.night : !ended && dayIdx < 0 ? 1 : null;
+  const upcoming = state.nights.map((rid, i) => ({ rid, night: i + 1, date: gen.nightDates[i] }))
+    .filter((x) => x.date > today && x.night !== heroNight).slice(0, 3);
+  // discovery shows only dishes that are not in the plan, favourites first; planned dishes already appear above or in the plan
   const inPlan = new Set(state.nights);
   const suggestions = [
     ...RECIPES.filter((r) => state.favorites.includes(r.id) && !inPlan.has(r.id)),
     ...RECIPES.filter((r) => !inPlan.has(r.id) && !state.favorites.includes(r.id)),
-    ...RECIPES.filter((r) => inPlan.has(r.id) && r.id !== tonight?.recipeId && !upcoming.some((u) => u.rid === r.id)),
   ].slice(0, 4);
 
   // what tonight still needs from the shop
@@ -165,9 +168,9 @@ export function TodayTab({ store, today, openRecipe, cook, go, browse }: Props) 
 
   return (
     <div className="space-y-8">
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:gap-8">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:gap-8">
         {/* ================================================ main column */}
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
           {/* ------------------------------------------------ tonight */}
           <section key={heroR?.id ?? 'none'} className="rise overflow-hidden rounded-[28px] border border-line bg-paper shadow-[var(--shadow-card)] md:grid md:grid-cols-2">
             {heroR ? (
@@ -199,11 +202,13 @@ export function TodayTab({ store, today, openRecipe, cook, go, browse }: Props) 
                         <Button variant="primary" icon="chef" className="flex-1" onClick={() => cook(tonightR.id)}>ابدأ التحضير</Button>
                         <Button variant="outline" onClick={() => openRecipe(tonightR.id)}>عرض الوصفة</Button>
                       </div>
-                      {options.length > 0 && (
+                      {options.length > 0 ? (
                         <button onClick={() => setSosOpen(true)}
-                          className="mt-3 inline-flex items-center gap-2 self-start rounded-full bg-tomato-soft px-3.5 py-2 text-[14px] font-bold text-danger">
+                          className="mt-2 inline-flex min-h-10 items-center gap-2 self-start rounded-full px-1 text-[14px] font-bold text-ink/80 underline decoration-line decoration-2 underline-offset-4 hover:text-ink">
                           <span className="emoji" aria-hidden="true">😮‍💨</span> يوم متعب؟ ما عندي طاقة الليلة
                         </button>
+                      ) : (
+                        <p className="mt-3 text-[13px] text-muted">وجبة الليلة من الوجبات السريعة أصلًا، فلا بديل أسرع منها.</p>
                       )}
                     </>
                   ) : (
@@ -211,7 +216,11 @@ export function TodayTab({ store, today, openRecipe, cook, go, browse }: Props) 
                       <p className="mt-3 text-[14.5px] leading-relaxed text-ink/80">
                         {dayIdx === -1 ? 'اليوم للتسوق وتجهيز بسيط في المساء، فيكون عشاء الغد سهلًا.' : fmtDate(state.startDate)}
                       </p>
-                      <div className="mt-auto pt-4"><Button variant="primary" onClick={() => openRecipe(heroR.id)}>عرض الوصفة</Button></div>
+                      <div className="mt-auto flex flex-wrap gap-2 pt-4">
+                        <Button variant="primary" className="flex-1" onClick={() => openRecipe(heroR.id)}>عرض الوصفة</Button>
+                        <Button variant="outline" onClick={() => browse({ max: 30 })}>عشاء الليلة خارج الخطة</Button>
+                      </div>
+                      <p className="mt-2 text-[12.5px] text-muted">لا عشاء مخططًا الليلة؛ الخطة تبدأ {relDay(state.startDate, today)}.</p>
                     </>
                   )}
                 </div>
@@ -220,10 +229,13 @@ export function TodayTab({ store, today, openRecipe, cook, go, browse }: Props) 
               <div className="p-6 md:col-span-2">
                 <h2 className="text-[24px] font-extrabold">انتهت الخطة</h2>
                 <p className="mt-1 text-[14.5px] text-ink/80">ابدأ دورة جديدة بالوصفات نفسها أو عدّلها من تبويب الخطة.</p>
-                <Button variant="primary" className="mt-3" onClick={() => {
-                  set({ startDate: addDays(today, 1), checked: {}, custom: state.custom.map((c) => ({ ...c, checked: false })) });
-                  toast('تبدأ دورة جديدة غدًا.');
-                }}>ابدأ دورة جديدة غدًا</Button>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button variant="primary" onClick={() => {
+                    set({ startDate: addDays(today, 1), checked: {}, custom: state.custom.map((c) => ({ ...c, checked: false })) });
+                    toast('تبدأ دورة جديدة غدًا.');
+                  }}>ابدأ دورة جديدة غدًا</Button>
+                  <Button variant="outline" onClick={() => browse({ max: 30 })}>عشاء الليلة: وصفات سريعة</Button>
+                </div>
               </div>
             )}
           </section>
@@ -261,12 +273,25 @@ export function TodayTab({ store, today, openRecipe, cook, go, browse }: Props) 
             </p>
             {sections.length > 0 ? (
               <ol className="space-y-3" aria-label="مهام اليوم">
-                {sections.map((sec, i) => (
-                  <li key={sec.id} aria-current={i === current ? 'step' : undefined}
-                    className={`rounded-[22px] border bg-paper p-4 ${i === current ? 'border-saffron shadow-[var(--shadow-card)] ring-2 ring-saffron/45' : 'border-line'} ${i < current ? 'opacity-80' : ''}`}>
-                    {sec.node}
-                  </li>
-                ))}
+                {sections.map((sec, i) => {
+                  const finished = i < current && sec.tasks.length > 0 && sec.tasks.every(done);
+                  return finished ? (
+                    <li key={sec.id}>
+                      <details className="rounded-[22px] border border-line bg-paper px-4">
+                        <summary className="flex min-h-12 cursor-pointer items-center gap-2 text-[14px] font-bold text-muted">
+                          <span className="grid size-6 place-items-center rounded-full bg-teal text-white"><Icon name="check" className="size-3.5" /></span>
+                          <span className="num text-copper">{fmtTime(sec.time)}</span> {sec.label}: تمت
+                        </summary>
+                        <div className="pb-4">{sec.node}</div>
+                      </details>
+                    </li>
+                  ) : (
+                    <li key={sec.id} aria-current={i === current ? 'step' : undefined}
+                      className={`rounded-[22px] border bg-paper p-4 ${i === current ? 'border-saffron shadow-[var(--shadow-card)] ring-2 ring-saffron/45' : 'border-line'} ${i < current ? 'opacity-80' : ''}`}>
+                      {sec.node}
+                    </li>
+                  );
+                })}
               </ol>
             ) : (
               <p className="rounded-2xl border border-dashed border-line bg-paper px-4 py-5 text-center text-[14px] text-muted">لا مهام اليوم.</p>
@@ -275,7 +300,7 @@ export function TodayTab({ store, today, openRecipe, cook, go, browse }: Props) 
         </div>
 
         {/* ================================================ side column */}
-        <aside className="space-y-6">
+        <aside className="min-w-0 space-y-6">
           {upcoming.length > 0 && (
             <section>
               <div className="mb-2 flex items-baseline justify-between px-1">
@@ -305,10 +330,10 @@ export function TodayTab({ store, today, openRecipe, cook, go, browse }: Props) 
 
           <section>
             <h3 className="mb-2 px-1 text-[19px] font-extrabold">كم من الوقت لديك؟</h3>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-2">
+            <div className="scroll-x -mx-4 flex gap-2 px-4 lg:mx-0 lg:grid lg:grid-cols-2 lg:px-0">
               {MOODS.map((m) => (
                 <button key={m.id} onClick={() => browse(m.preset)}
-                  className="flex items-center gap-2.5 rounded-2xl border border-line bg-paper px-3 py-3 text-start text-[14px] font-bold transition hover:border-teal">
+                  className="flex min-h-12 shrink-0 items-center gap-2.5 rounded-2xl border border-line bg-paper px-3 py-2.5 text-start text-[14px] font-bold transition hover:border-teal">
                   <span className="emoji text-[22px]" aria-hidden="true">{m.emoji}</span>{m.label}
                 </button>
               ))}
@@ -335,8 +360,9 @@ export function TodayTab({ store, today, openRecipe, cook, go, browse }: Props) 
             <h3 className="text-[19px] font-extrabold">وصفات تستحق التجربة</h3>
             <button className="link text-[13.5px]" onClick={() => browse()}>كل الوصفات</button>
           </div>
-          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-5">
-            {suggestions.map((r) => <li key={r.id}><RecipeCard r={r} state={state} store={store} open={() => openRecipe(r.id)} compact /></li>)}
+          <p className="-mt-2 mb-3 px-1 text-[13px] text-muted">ليست في خطتك الحالية.</p>
+          <ul className="scroll-x -mx-4 flex snap-x gap-3 px-4 sm:mx-0 sm:grid sm:grid-cols-4 sm:px-0 lg:gap-5">
+            {suggestions.map((r) => <li key={r.id} className="w-[46%] shrink-0 snap-start sm:w-auto"><RecipeCard r={r} state={state} store={store} open={() => openRecipe(r.id)} compact /></li>)}
           </ul>
         </section>
       )}

@@ -7,6 +7,16 @@ import './index.css';
 document.documentElement.lang = 'ar';
 document.documentElement.dir = 'rtl';
 
+// After a release the new service worker takes control of this open page; reload once so the page and
+// its lazy chunks come from the same release (the old release's files are gone from the server).
+if ('serviceWorker' in navigator) {
+  let controlled = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (controlled) window.location.reload();
+    controlled = true;
+  });
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />

@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ALLERGENS, ING, RECIPE, recipeAllergens, TAGS, type Recipe } from '../lib/data';
-import { scaledQty } from '../lib/engine';
-import { arCount, diffDays, fmtDateShort, fmtQty, num, PERSON, PORTION, todayISO } from '../lib/format';
+import { dishCost, scaledQty } from '../lib/engine';
+import { arCount, diffDays, fmtDateShort, fmtQty, num, omr, PERSON, PORTION, todayISO } from '../lib/format';
 import { members, servings } from '../lib/state';
 import type { Store } from '../store';
 import { hasConflict, recipeConflicts } from './shared';
 import { applyEmergency } from '../lib/schedule';
 import { MAX_NIGHTS } from '../lib/state';
+import { HouseholdEditor } from './HouseholdEditor';
 import { RecipeImage } from './RecipeImage';
 import { Badge, Button, Checkbox, Icon, IconButton, Sheet, Switch, useToast } from './ui';
 
@@ -37,6 +38,9 @@ export function RecipeSheet({ store, recipeId, kitchenFirst = false, onClose }: 
   const allergens = recipeAllergens(r, new Set(state.optionalOff));
   const conflict = recipeConflicts(r, state);
   const fav = state.favorites.includes(r.id);
+  const dc = dishCost(r.id, { servings: sv, optionalOff: state.optionalOff, priceBook: state.priceBook, storeMode: state.storeMode, today: todayISO() });
+  const costKnown = dc.items > 0 && dc.priced / dc.items >= 0.8;
+  const hands = r.total - r.active;
   const toggleOpt = (ingId: string, on: boolean) => set((s) => {
     const key = `${r.id}:${ingId}`;
     const rest = s.optionalOff.filter((k) => k !== key);
@@ -46,7 +50,7 @@ export function RecipeSheet({ store, recipeId, kitchenFirst = false, onClose }: 
   return (
     <>
       <Sheet open={!!r && !kitchen} onClose={onClose} title={r.title} wide>
-        <RecipeImage recipe={r} variant="hero" priority className="aspect-[4/3] rounded-2xl sm:aspect-[16/9]" />
+        <RecipeImage recipe={r} variant="hero" priority sizes="(min-width: 640px) 680px, 100vw" className="aspect-[4/3] rounded-2xl sm:aspect-[16/9]" />
         <div className="mt-3 flex items-start gap-3">
           <p className="flex-1 text-[15px] leading-relaxed text-ink/80">{r.subtitle}</p>
           <button onClick={() => { set((s) => ({ favorites: fav ? s.favorites.filter((x) => x !== r.id) : [...s.favorites, r.id] })); toast(fav ? 'أُزيلت من المفضلة.' : 'أُضيفت إلى المفضلة.'); }}
@@ -54,27 +58,36 @@ export function RecipeSheet({ store, recipeId, kitchenFirst = false, onClose }: 
             {fav ? '★' : '☆'} مفضلة
           </button>
         </div>
-        <dl className="mt-3 grid grid-cols-3 gap-2 text-center">
-          <Fact label="المدة" value={`${r.total} د`} />
+        <dl className="mt-3 grid grid-cols-2 gap-2 text-center sm:grid-cols-4">
           <Fact label="عمل فعلي" value={`${r.active} د`} />
+          <Fact label="الوقت الإجمالي" value={`${r.total} د`} />
           <Fact label="الحصص" value={num(sv, 1)} />
+          <Fact label="تكلفة تقديرية" value={costKnown ? omr(dc.cost) : 'غير متاحة'} />
         </dl>
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {r.tags.map((t) => <Badge key={t}>{TAGS[t]}</Badge>)}
-        </div>
+        <p className="mt-2 text-[13px] leading-relaxed text-muted">
+          {hands > 0 ? <>منها <span className="num">{hands}</span> د طهي أو انتظار دون وقوف في المطبخ. </> : 'كل وقتها عمل باليد. '}
+          {costKnown
+            ? <>التكلفة لعشاء واحد بحصص أسرتك، بأسعار الخطة{dc.priced < dc.items ? ` (${dc.priced} من ${dc.items} مكوّنًا مسعّرة)` : ''}؛ دون التوابل والزيت.</>
+            : 'التكلفة غير متاحة لأن أسعار بعض المكونات غير مسجلة.'}
+        </p>
 
         {hasConflict(conflict) ? (
           <div className="mt-3 flex gap-2 rounded-2xl bg-danger-soft p-3 text-[14px] leading-relaxed text-danger">
             <Icon name="alert" className="mt-0.5 size-5 shrink-0" />
             <span>تحتوي هذه الوجبة ما استبعدته الأسرة: <b>{[...conflict.allergens.map((a) => ALLERGENS[a]), ...conflict.ingredients].join('، ')}</b>. يُراجَع كل مكوّن وملصقه قبل الطهي.</span>
           </div>
-        ) : (allergens.contains.length > 0 || allergens.may.length > 0) && (
+        ) : allergens.contains.length > 0 || allergens.may.length > 0 ? (
           <p className="mt-3 flex gap-2 rounded-2xl bg-warn-soft p-3 text-[13.5px] leading-relaxed text-warn">
             <Icon name="alert" className="mt-0.5 size-5 shrink-0" />
             <span>
               {allergens.contains.length > 0 && <>يحتوي: <b>{allergens.contains.map((a) => ALLERGENS[a]).join('، ')}</b>. </>}
               {allergens.may.length > 0 && <>قد يحتوي حسب المنتج: {allergens.may.map((a) => ALLERGENS[a]).join('، ')}.</>}
             </span>
+          </p>
+        ) : (
+          <p className="mt-3 flex gap-2 rounded-2xl bg-teal-soft p-3 text-[13.5px] leading-relaxed text-teal-deep">
+            <Icon name="check" className="mt-0.5 size-5 shrink-0" />
+            <span>لا تحتوي مكوناتها مسببات الحساسية الشائعة المسجلة في الدليل.</span>
           </p>
         )}
 
@@ -87,10 +100,24 @@ export function RecipeSheet({ store, recipeId, kitchenFirst = false, onClose }: 
             في خطتك: {nights.map((i) => fmtDateShort(store.gen.nightDates[i])).join('، ')}
           </p>
         )}
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {r.tags.map((t) => <Badge key={t}>{TAGS[t]}</Badge>)}
+        </div>
 
         <h4 className="mt-6 mb-2 flex items-baseline justify-between text-[16px] font-extrabold">
           المقادير <span className="text-[13px] font-medium text-muted"><span className="num">{arCount(members(state), PERSON)}</span> · <span className="num">{arCount(sv, PORTION)}</span></span>
         </h4>
+        <details className="group mb-2 rounded-2xl border border-line bg-paper">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-3.5 text-[14px] font-bold text-teal">
+            <Icon name="users" className="size-[18px]" />
+            <span className="flex-1">تعديل الحصص</span>
+            <Icon name="down" className="size-4 text-muted transition group-open:rotate-180" />
+          </summary>
+          <div className="px-3.5 pb-3.5">
+            <p className="mb-2 text-[12.5px] leading-relaxed text-muted">الحصص تتبع أفراد الأسرة وشهيتهم، فتتغير معها المقادير هنا وكميات قائمة التسوق للخطة كلها.</p>
+            <HouseholdEditor store={store} />
+          </div>
+        </details>
         <ul className="divide-y divide-line rounded-2xl border border-line bg-paper">
           {rows.map(({ ing, opt, off, note, text }) => (
             <li key={ing.id} className={`flex items-center gap-3 px-3 py-2.5 ${off ? 'opacity-50' : ''}`}>
@@ -183,15 +210,17 @@ function PlanAction({ store, recipeId }: { store: Store; recipeId: string }) {
     return (
       <Button variant="outline" onClick={() => {
         const moved = RECIPE[state.nights[tonight]].title;
+        const before = state.nights;
         set((s) => ({ nights: applyEmergency(s.nights, tonight, recipeId, MAX_NIGHTS) }));
-        toast(`صارت عشاء الليلة. ${moved} غدًا.`);
+        toast(`صارت عشاء الليلة. ${moved} غدًا.`, { label: 'تراجع', run: () => set({ nights: before }) });
       }}>اجعلها عشاء الليلة</Button>
     );
   }
   return (
     <Button variant="outline" disabled={state.nights.length >= MAX_NIGHTS} onClick={() => {
+      const before = state.nights;
       set((s) => ({ nights: [...s.nights, recipeId] }));
-      toast('أُضيفت إلى آخر الخطة.');
+      toast('أُضيفت إلى آخر الخطة.', { label: 'تراجع', run: () => set({ nights: before }) });
     }}>أضف إلى الخطة</Button>
   );
 }
@@ -266,7 +295,7 @@ function KitchenMode({ recipe, sv, optionalOff, onClose }: { recipe: Recipe; sv:
   const ss = String(left % 60).padStart(2, '0');
 
   return (
-    <div className="no-print fixed inset-0 z-[70] flex flex-col bg-teal-deep text-white" role="dialog" aria-modal="true" aria-label={`وضع المطبخ: ${recipe.title}`}>
+    <div className="on-dark no-print fixed inset-0 z-[70] flex flex-col bg-teal-deep text-white" role="dialog" aria-modal="true" aria-label={`وضع المطبخ: ${recipe.title}`}>
       <div className="flex items-center gap-2 px-4 pt-[calc(env(safe-area-inset-top)+12px)]">
         <IconButton icon="x" label="خروج من وضع المطبخ" onClick={onClose} className="text-white hover:bg-white/10 hover:text-white" />
         <div className="min-w-0 flex-1">

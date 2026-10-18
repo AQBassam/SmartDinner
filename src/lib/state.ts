@@ -156,6 +156,7 @@ export function importBackup(text: string, now = new Date()): ImportResult {
   const d = data as Record<string, unknown>;
   if (d.schemaVersion === 3) {
     const r = StateSchema.safeParse(data);
+    // a file from outside is all-or-nothing (it may be crafted); only the browser's own store is salvaged
     if (!r.success) throw new Error('بنية النسخة الاحتياطية غير صحيحة أو تالفة.');
     return { state: sanitize(r.data), from: 'v3', notes: [] };
   }
@@ -166,8 +167,12 @@ export function loadState(storage: Pick<Storage, 'getItem'> | null, now = new Da
   try {
     const raw = storage?.getItem(STORAGE_KEY);
     if (raw) {
-      const r = StateSchema.safeParse(JSON.parse(raw));
+      const parsed = JSON.parse(raw);
+      const r = StateSchema.safeParse(parsed);
       if (r.success) return { state: sanitize(r.data) };
+      // one bad field must not cost the family the rest: keep every field that still validates
+      const kept = salvageState(parsed, now);
+      if (kept) return { state: kept };
     }
     for (const key of [LEGACY_KEYS.reactV2, LEGACY_KEYS.htmlV2, LEGACY_KEYS.v1] as const) {
       const old = storage?.getItem(key);
@@ -179,6 +184,27 @@ export function loadState(storage: Pick<Storage, 'getItem'> | null, now = new Da
     }
   } catch { /* a corrupt store must never brick the app */ }
   return { state: defaultState(now) };
+}
+
+/**
+ * Field-by-field recovery of a stored v3 state that no longer validates as a whole (a hand-edited
+ * store, a stricter rule in a newer version): valid fields are kept, invalid list items are dropped,
+ * and only what cannot be read falls back to the default.
+ */
+export function salvageState(data: unknown, now = new Date()): AppState | null {
+  if (!data || typeof data !== 'object' || (data as { schemaVersion?: unknown }).schemaVersion !== 3) return null;
+  const d = data as Record<string, unknown>;
+  const out: Record<string, unknown> = { ...defaultState(now) };
+  const shape = StateSchema.shape as Record<string, z.ZodType>;
+  for (const [key, schema] of Object.entries(shape)) {
+    if (!(key in d)) continue;
+    const r = schema.safeParse(d[key]);
+    if (r.success) { out[key] = r.data; continue; }
+    if (key === 'priceBook' && Array.isArray(d[key])) out[key] = (d[key] as unknown[]).filter((x) => PriceRecordSchema.safeParse(x).success).slice(0, 1000);
+    if (key === 'custom' && Array.isArray(d[key])) out[key] = (d[key] as unknown[]).filter((x) => CustomItemSchema.safeParse(x).success).slice(0, 200);
+  }
+  const r = StateSchema.safeParse(out);
+  return r.success ? sanitize(r.data) : null;
 }
 
 export function exportBackup(s: AppState): string {

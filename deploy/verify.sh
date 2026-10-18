@@ -30,6 +30,7 @@ if [ -n "$asset" ]; then
 else bad "ملف JS" "لم يُعثر على /assets/index-*.js في الصفحة"; fi
 
 s=$(hdr /sw.js);  has "$s" '^HTTP/[0-9.]* 200' && has "$s" 'cache-control: no-cache' && ok "sw.js بلا تخزين" || bad "sw.js" "$(head -1 <<<"$s") $(grep -i cache-control <<<"$s")"
+o=$(hdr /og-image.jpg); has "$o" '^HTTP/[0-9.]* 200' && has "$o" 'content-type: image/jpeg' && ok "صورة المشاركة og-image.jpg" || bad "صورة المشاركة" "$(head -1 <<<"$o") $(grep -i content-type <<<"$o")"
 m=$(hdr /manifest.webmanifest); has "$m" 'content-type: application/manifest+json' && ok "نوع manifest صحيح" || bad "manifest" "$(grep -i content-type <<<"$m")"
 d=$(hdr /.previous); has "$d" '^HTTP/[0-9.]* 40[34]' && ok "الملفات المخفية محجوبة" || bad "الملفات المخفية" "$(head -1 <<<"$d")"
 

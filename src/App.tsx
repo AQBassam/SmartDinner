@@ -7,7 +7,7 @@ import { TodayTab } from './components/TodayTab';
 import { Intro } from './components/Intro';
 import { ShopTab } from './components/ShopTab';
 import { Icon, ToastProvider } from './components/ui';
-import { fmtDate, todayISO } from './lib/format';
+import { arCount, fmtDate, PERSON, todayISO } from './lib/format';
 import { members } from './lib/state';
 import { useStore } from './store';
 
@@ -85,7 +85,7 @@ export default function App() {
               );
             })}
           </nav>
-          <button onClick={() => go('plan')} aria-label={`${members(store.state)} أفراد على العشاء، تعديل العدد`}
+          <button onClick={() => go('plan')} aria-label={`${arCount(members(store.state), PERSON)} على العشاء، تعديل العدد`}
             className="flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border border-line bg-paper px-3 text-[14px] font-bold">
             <Icon name="users" className="size-[18px] text-teal" />
             <span className="num">{members(store.state)}</span>

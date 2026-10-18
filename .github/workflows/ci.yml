@@ -29,10 +29,17 @@ jobs:
         run: |
           pip install playwright==1.56.0
           python -m playwright install --with-deps chromium
+          mkdir -p test-results
           python tests/e2e.py dist shots | tee test-results/e2e.txt
         shell: bash
       - name: Layout audit (covered text, clipping, sideways scroll, tap targets)
         run: python tests/ui_audit.py dist shots/audit | tee test-results/audit.txt
+        shell: bash
+      - name: Real-use checks (phone load, keyboard, axe, calendar, backup, site update)
+        run: |
+          pip install icalendar==6.1.3
+          bash tests/build_next.sh /tmp/dist-next && npm run build
+          python tests/realuse.py dist /tmp/dist-next shots/realuse | tee test-results/realuse.txt
         shell: bash
       - name: Test summary
         if: always()

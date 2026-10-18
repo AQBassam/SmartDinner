@@ -38,12 +38,17 @@ export default defineConfig(({ mode }) => {
             },
             workbox: {
               globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+              // a new release takes over at the next visit instead of waiting until every tab and the installed
+              // app are closed (src/main.tsx reloads the open page once when that happens)
+              skipWaiting: true,
+              clientsClaim: true,
               // Recipe photos are not precached (18 × 2 sizes would bloat the first visit); each one is kept
-              // after it is first shown, so dishes already seen stay visible offline. Replaced photos carry a new ?v=.
+              // after it is first shown, so dishes already seen stay visible offline. Replaced photos carry a new ?v=;
+              // 40 entries = the 36 current files plus a few, so superseded versions are evicted soon.
               runtimeCaching: [{
                 urlPattern: /\/recipes\/[a-z0-9_]+-(card|hero)\.webp/,
                 handler: 'CacheFirst',
-                options: { cacheName: 'recipe-photos', expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 180 } },
+                options: { cacheName: 'recipe-photos', expiration: { maxEntries: 40, maxAgeSeconds: 60 * 60 * 24 * 180 } },
               }],
             },
           }),
