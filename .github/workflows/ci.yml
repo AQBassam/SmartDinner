@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Unit tests (data, engine, schedule, prices, migration, exports)
+        run: npm test
+      - name: Production build
+        run: npm run build
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Browser tests under the production CSP
+        run: |
+          pip install playwright==1.56.0
+          python -m playwright install --with-deps chromium
+          python tests/e2e.py dist shots
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screenshots
+          path: shots/
+          retention-days: 14
+
+  release:
+    # A tag like v3.3.0 builds the self-verifying deploy tarball and attaches it to a GitHub Release.
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: test
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Tag must match package.json version
+        run: test "v$(node -p "require('./package.json').version")" = "${GITHUB_REF_NAME}"
+      - run: npm run build && bash scripts/release.sh
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release/dinner-release-*.tar.gz
+            release/dinner-release-*.tar.gz.sha256
+          generate_release_notes: true

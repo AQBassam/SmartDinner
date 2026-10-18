@@ -1,0 +1,97 @@
+@import 'tailwindcss';
+@import '@fontsource/tajawal/400.css';
+@import '@fontsource/tajawal/500.css';
+@import '@fontsource/tajawal/700.css';
+@import '@fontsource/tajawal/800.css';
+
+@theme {
+  --font-sans: 'Tajawal', system-ui, sans-serif;
+  --font-emoji: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+  /* Home-kitchen palette (design review 3.2): warm cream, espresso ink, the site's green for actions,
+     tomato for food moments, saffron gold as a touch, olive as the herb green */
+  --color-tomato: #c95b3c;
+  --color-tomato-soft: #f9e6df;
+  --color-olive: #71835e;
+  --color-sand: #fff8ef;
+  --color-sand-2: #f4eadc;
+  --color-paper: #ffffff;
+  --color-ink: #2b2824;
+  --color-muted: #716a61;
+  --color-line: #e7ded2;
+  --color-teal: #2e6a4a;
+  --color-teal-bright: #71835e;
+  --color-teal-deep: #1e4a33;
+  --color-teal-soft: #e2efe5;
+  --color-saffron: #e6b247;
+  --color-saffron-soft: #fbf0d8;
+  --color-copper: #8a5a00;
+  --color-copper-soft: #fdf0d3;
+  --color-ok: #2e7a57;
+  --color-ok-soft: #e3f3ea;
+  --color-warn: #946000;
+  --color-warn-soft: #fdf1dc;
+  --color-ice: #2b6c9e;
+  --color-ice-soft: #e4effa;
+  --color-danger: #a9452a;
+  --color-danger-soft: #f9e6df;
+  --shadow-card: 0 1px 2px rgb(43 40 36 / 0.05), 0 10px 26px -16px rgb(43 40 36 / 0.22);
+}
+
+html { -webkit-text-size-adjust: 100%; }
+body {
+  background: var(--color-sand);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-feature-settings: 'tnum' 1;
+  -webkit-tap-highlight-color: transparent;
+}
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--color-teal-bright); outline-offset: 2px; border-radius: 10px; }
+input[type='date'] { min-height: 44px; }
+.input { display: block; width: 100%; min-height: 44px; border: 1px solid var(--color-line); background: var(--color-paper); border-radius: 12px; padding: 0 10px; font-size: 15px; color: var(--color-ink); }
+/* A top-view plate: tinted food area, white rim, soft shadow; the dish glyph sits in the middle. */
+.plate {
+  display: inline-grid; place-items: center; flex-shrink: 0; border-radius: 9999px; line-height: 1;
+  font-family: var(--font-emoji);
+  background: radial-gradient(circle, var(--tint, #efe6c9) 0 52%, #fff 53% 64%, #ecebe3 65% 68%, #fff 69%);
+  box-shadow: 0 8px 18px -10px rgb(42 27 45 / .45), inset 0 0 0 1px rgb(42 27 45 / .06);
+}
+.emoji { font-family: var(--font-emoji); line-height: 1; }
+.dish-fallback {
+  background:
+    radial-gradient(circle at 50% 55%, rgb(255 255 255 / .55), transparent 62%),
+    color-mix(in srgb, var(--tint, #efe6c9) 70%, #fff8ef);
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .dish-card .dish-photo, .dish-card .plate { transition: transform .35s ease; }
+  .dish-card:hover .dish-photo, .dish-card:hover .plate { transform: scale(1.035); }
+}
+@keyframes rise { from { opacity: 0; transform: translateY(6px) } to { opacity: 1; transform: none } }
+.rise { animation: rise .32s ease-out both; }
+@media (prefers-reduced-motion: reduce) { .rise { animation: none; } .dish-photo { transition: none !important; } }
+.hero-cloth {
+  background-color: var(--color-saffron);
+  background-image: radial-gradient(rgb(255 255 255 / .22) 1.2px, transparent 1.3px);
+  background-size: 14px 14px;
+}
+.num { font-variant-numeric: tabular-nums; direction: ltr; unicode-bidi: isolate; }
+.safe-bottom { padding-bottom: calc(env(safe-area-inset-bottom) + 76px); }
+@media (min-width: 64rem) { .safe-bottom { padding-bottom: 64px; } }
+.nav-safe { padding-bottom: env(safe-area-inset-bottom); }
+.scroll-x { overflow-x: auto; scrollbar-width: none; }
+.scroll-x::-webkit-scrollbar { display: none; }
+
+@keyframes sheet-in { from { transform: translateY(24px); opacity: 0 } to { transform: none; opacity: 1 } }
+.sheet-in { animation: sheet-in .22s ease-out; }
+@keyframes toast-in { from { transform: translateY(12px); opacity: 0 } to { transform: none; opacity: 1 } }
+.toast-in { animation: toast-in .2s ease-out; }
+@media (prefers-reduced-motion: reduce) { .sheet-in, .toast-in { animation: none; } }
+
+@media print {
+  body { background: #fff; }
+  .no-print { display: none !important; }
+  .print-only { display: block !important; }
+  .card { box-shadow: none !important; border: 1px solid #ccc !important; break-inside: avoid; }
+  main { padding: 0 !important; }
+}
+.print-only { display: none; }

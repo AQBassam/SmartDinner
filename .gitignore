@@ -1,0 +1,12 @@
+node_modules/
+dist/
+dist-preview/
+release/
+shots/
+test-results/
+coverage/
+photos/
+.DS_Store
+*.log
+.env*
+!.env.example

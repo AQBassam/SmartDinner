@@ -1,0 +1,165 @@
+{
+ "schemaVersion": 2,
+ "settings": {
+  "householdSize": 6,
+  "appetiteFactor": 1.15,
+  "startDate": "2026-10-20",
+  "planLength": 10,
+  "excludedIngredients": [
+   "cornmeal_tahini"
+  ]
+ },
+ "plan": [
+  {
+   "id": "night_mvdmwl1f_t4x4wf",
+   "recipeId": "R15"
+  },
+  {
+   "id": "night_mvdmwl1f_ohkaxt",
+   "recipeId": "R03"
+  },
+  {
+   "id": "night_mvdmwl1f_jo4thd",
+   "recipeId": "R03"
+  },
+  {
+   "id": "night_mvdmwl1f_d34hjt",
+   "recipeId": "R04"
+  },
+  {
+   "id": "night_mvdmwl1f_y4dyzx",
+   "recipeId": "R05"
+  },
+  {
+   "id": "night_mvdmwl1f_dvk16c",
+   "recipeId": "R06"
+  },
+  {
+   "id": "night_mvdmwl1f_j0gopu",
+   "recipeId": "R07"
+  },
+  {
+   "id": "night_mvdmwl1f_np341h",
+   "recipeId": "R08"
+  },
+  {
+   "id": "night_mvdmwl1f_x2gvw9",
+   "recipeId": "R09"
+  },
+  {
+   "id": "night_mvdmwl1f_jqr3hm",
+   "recipeId": "R10"
+  }
+ ],
+ "manualItems": [
+  {
+   "id": "manual_a",
+   "ingredientId": null,
+   "qty": 2,
+   "unit": "عبوة",
+   "batch": "second",
+   "category": "custom",
+   "name": "مناديل المطبخ"
+  },
+  {
+   "id": "manual_b",
+   "ingredientId": "yogurt",
+   "qty": 500,
+   "unit": "g",
+   "batch": "first",
+   "category": "dairy",
+   "name": "زبادي طبيعي غير محلى"
+  }
+ ],
+ "legacyItems": [
+  {
+   "id": "legacy_1",
+   "name": "حفاضات",
+   "qtyText": "كيس",
+   "category": "custom",
+   "batch": "pantry",
+   "checked": true
+  }
+ ],
+ "inventory": {
+  "rice": {
+   "qty": 1500
+  },
+  "tomato_sauce_kofta": {
+   "qty": 800
+  },
+  "egg": {
+   "qty": 6
+  }
+ },
+ "purchased": {
+  "egg": 6
+ },
+ "prices": [
+  {
+   "id": "price_1",
+   "ingredientId": "chicken_boneless",
+   "storeId": "nesto",
+   "productName": "صدور دجاج مجمدة",
+   "packageQuantity": 1,
+   "packageUnit": "kg",
+   "priceOMR": 1.95,
+   "priceType": "manual",
+   "checkedAt": "2026-10-17",
+   "validTo": "",
+   "region": "صحار",
+   "sourceUrl": ""
+  },
+  {
+   "id": "price_2",
+   "ingredientId": "tomato_sauce_kofta",
+   "storeId": "hypermax",
+   "productName": "طماطم مطحونة",
+   "packageQuantity": 400,
+   "packageUnit": "g",
+   "priceOMR": 0.25,
+   "priceType": "verified_online",
+   "checkedAt": "2026-10-16",
+   "validTo": "2026-10-25",
+   "region": "",
+   "sourceUrl": "https://hypermaxpromo.com/"
+  },
+  {
+   "id": "price_3",
+   "ingredientId": "egg",
+   "storeId": "lulu",
+   "productName": "بيض 30",
+   "packageQuantity": 30,
+   "packageUnit": "egg",
+   "priceOMR": 2.1,
+   "priceType": "manual",
+   "checkedAt": "2026-10-18",
+   "validTo": "",
+   "region": "",
+   "sourceUrl": ""
+  }
+ ],
+ "reminders": {
+  "first": {
+   "date": "2026-10-18",
+   "done": false
+  },
+  "second": {
+   "date": "2026-10-22",
+   "done": false
+  },
+  "pantry": {
+   "date": "2026-10-23",
+   "done": false
+  }
+ },
+ "optionalSelections": {
+  "R06:egg": false
+ },
+ "favorites": [
+  "R15",
+  "R09"
+ ],
+ "tasks": {},
+ "lastUpdated": "2026-10-18T09:39:55.557Z"
+}

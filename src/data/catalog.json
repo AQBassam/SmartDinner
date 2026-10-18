@@ -1,0 +1,1114 @@
+{
+ "_meta": {
+  "currency": "OMR",
+  "priceNote": "verified = تحقق مباشر من صفحة المنتج في متجر لولو عُمان الإلكتروني بالتاريخ المذكور؛ recorded = سعر مسجل في الإصدار الأول ولم يُعَد التحقق منه؛ estimate = تقدير تخطيطي يجب تعديله.",
+  "keepDaysNote": "أيام الحفظ الآمن بعد الشراء في الثلاجة أو المخزن، بتقدير متحفظ.",
+  "allergenNote": "allergens = يحتويه المكوّن دائمًا؛ mayContain = يختلف حسب المنتج ويجب قراءة الملصق."
+ },
+ "categories": {
+  "protein": "اللحوم والدواجن والأسماك والبيض",
+  "dairy": "الألبان والأجبان",
+  "bakery": "الخبز",
+  "produce": "الخضراوات والفواكه",
+  "pantry": "المعلبات والحبوب والمجمدات",
+  "staples": "الزيوت والبهارات (تحقق من المخزن)"
+ },
+ "allergens": {
+  "gluten": "القمح (الغلوتين)",
+  "milk": "الحليب ومشتقاته",
+  "egg": "البيض",
+  "fish": "السمك",
+  "sesame": "السمسم",
+  "soy": "الصويا",
+  "peanut": "الفول السوداني",
+  "nuts": "المكسرات",
+  "crustaceans": "القشريات",
+  "molluscs": "الرخويات",
+  "celery": "الكرفس",
+  "mustard": "الخردل",
+  "sulphites": "الكبريتيت",
+  "lupin": "الترمس"
+ },
+ "ingredients": [
+  {
+   "id": "chicken_breast",
+   "name": "دجاج منزوع العظم (صدور مجمدة)",
+   "cat": "protein",
+   "unit": "g",
+   "scale": "linear",
+   "keepDays": 90,
+   "frozen": true,
+   "thaw": true,
+   "bulk": true,
+   "sold": {
+    "type": "pack",
+    "size": 2000,
+    "label": "عبوة 2 كغ"
+   },
+   "price": {
+    "value": 3.79,
+    "source": "verified",
+    "date": "2026-10-18",
+    "store": "lulu",
+    "url": "https://gcc.luluhypermarket.com/en-om/lulu-frozen-chicken-breast-2-kg/p/1128182"
+   }
+  },
+  {
+   "id": "chicken_thighs",
+   "name": "قطع دجاج بالعظم (أفخاذ مجمدة)",
+   "cat": "protein",
+   "unit": "g",
+   "scale": "linear",
+   "keepDays": 90,
+   "frozen": true,
+   "thaw": true,
+   "bulk": true,
+   "sold": {
+    "type": "pack",
+    "size": 1000,
+    "label": "عبوة 1 كغ"
+   },
+   "price": {
+    "value": 1.75,
+    "source": "verified",
+    "date": "2026-10-18",
+    "store": "lulu",
+    "url": "https://gcc.luluhypermarket.com/en-om/a-saffa-frozen-chicken-thighs-1-kg/p/890121"
+   }
+  },
+  {
+   "id": "minced_beef",
+   "name": "لحم مفروم قليل الدهن (طازج)",
+   "cat": "protein",
+   "unit": "g",
+   "scale": "linear",
+   "keepDays": 2,
+   "freezable": true,
+   "thaw": true,
+   "bulk": true,
+   "sold": {
+    "type": "pack",
+    "size": 500,
+    "label": "عبوة 500 غ"
+   },
+   "price": {
+    "value": 2.525,
+    "source": "verified",
+    "date": "2026-10-18",
+    "store": "lulu",
+    "url": "https://gcc.luluhypermarket.com/en-om/south-african-minced-beef-500-g/p/521036-ea/"
+   }
+  },
+  {
+   "id": "fish_fillet",
+   "name": "فيليه سمك أبيض (مجمد)",
+   "cat": "protein",
+   "unit": "g",
+   "scale": "linear",
+   "keepDays": 90,
+   "frozen": true,
+   "thaw": true,
+   "bulk": true,
+   "allergens": [
+    "fish"
+   ],
+   "sold": {
+    "type": "pack",
+    "size": 1000,
+    "label": "عبوة 1 كغ"
+   },
+   "price": {
+    "value": 1.89,
+    "source": "verified",
+    "date": "2026-10-18",
+    "store": "lulu",
+    "url": "https://gcc.luluhypermarket.com/en-om/lulu-frozen-white-fish-fillet-1-kg/p/701783"
+   }
+  },
+  {
+   "id": "falafel",
+   "name": "فلافل مجمدة جاهزة للطهي",
+   "cat": "protein",
+   "unit": "g",
+   "scale": "linear",
+   "keepDays": 90,
+   "frozen": true,
+   "bulk": true,
+   "mayContain": [
+    "gluten",
+    "sesame"
+   ],
+   "sold": {
+    "type": "pack",
+    "size": 500,
+    "label": "كيس 500 غ"
+   },
+   "price": {
+    "value": 0.95,
+    "source": "estimate"
+   }
+  },
+  {
+   "id": "eggs",
+   "name": "بيض",
+   "cat": "protein",
+   "unit": "pcs",
+   "forms": [
+    "بيضة",
+    "بيضتان",
+    "بيضات",
+    "بيضة"
+   ],
+   "round": "int",
+   "scale": "linear",
+   "keepDays": 21,
+   "allergens": [
+    "egg"
+   ],
+   "sold": {
+    "type": "pack",
+    "size": 30,
+    "label": "طبق 30 بيضة"
+   },
+   "price": {
+    "value": 2.13,
+    "source": "verified",
+    "date": "2026-10-18",
+    "store": "lulu",
+    "url": "https://gcc.luluhypermarket.com/en-om/dana-omani-white-eggs-large-30-pcs/p/42387/"
+   }
+  },
+  {
+   "id": "yogurt",
+   "name": "زبادي طبيعي غير محلى",
+   "cat": "dairy",
+   "unit": "g",
+   "scale": "linear",
+   "keepDays": 10,
+   "allergens": [
+    "milk"
+   ],
+   "sold": {
+    "type": "pack",
+    "size": 1000,
+    "label": "عبوة 1 كغ"
+   },
+   "price": {
+    "value": 0.675,
+    "source": "verified",
+    "date": "2026-10-18",
+    "store": "lulu",
+    "url": "https://gcc.luluhypermarket.com/en-om/mazoon-fresh-yoghurt-full-fat-1-kg/p/1679877",
+    "note": "Mazoon Fresh Yoghurt Full Fat 1 kg"
+   }
+  },
+  {
+   "id": "labneh",
+   "name": "لبنة",
+   "cat": "dairy",
+   "unit": "g",
+   "scale": "linear",
+   "keepDays": 10,
+   "allergens": [
+    "milk"
+   ],
+   "sold": {
+    "type": "pack",
+    "size": 400,
+    "label": "عبوة 400 غ"
+   },
+   "price": {
+    "value": 1.695,
+    "source": "verified",
+    "date": "2026-10-18",
+    "store": "lulu",
+    "url": "https://gcc.luluhypermarket.com/en-om/al-safi-creamy-labneh-400-g/p/2018801",
+    "note": "Al Safi Creamy Labneh 400 g"
+   }
+  },
+  {
+   "id": "hummus_dip",
+   "name": "حمص مهروس جاهز (متبل)",
+   "cat": "dairy",
+   "unit": "g",
+   "scale": "linear",
+   "keepDays": 4,
+   "allergens": [
+    "sesame"
+   ],
+   "sold": {
+    "type": "pack",
+    "size": 250,
+    "label": "علبة 250 غ"
+   },
+   "price": {
+    "value": 0.45,
+    "source": "estimate"
+   }
+  },
+  {
+   "id": "cheese_grated",
+   "name": "جبن مبشور (حسب الاختيار)",
+   "cat": "dairy",
+   "unit": "g",
+   "scale": "linear",
+   "keepDays": 21,
+   "allergens": [
+    "milk"
+   ],
+   "sold": {
+    "type": "pack",
+    "size": 200,
+    "label": "عبوة 200 غ"
+   },
+   "price": {
+    "value": 0.9,
+    "source": "estimate"
+   }
+  },
+  {
+   "id": "mozzarella",
+   "name": "موزاريلا مبشورة",
+   "cat": "dairy",
+   "unit": "g",
+   "scale": "linear",
+   "keepDays": 14,
+   "allergens": [
+    "milk"
+   ],
+   "sold": {
+    "type": "pack",
+    "size": 360,
+    "label": "عبوتان × 180 غ"
+   },
+   "price": {
+    "value": 1.59,
+    "source": "recorded",
+    "store": "lulu"
+   }
+  },
+  {
+   "id": "pita",
+   "name": "خبز عربي",
+   "cat": "bakery",
+   "unit": "pcs",
+   "forms": [
+    "رغيف",
+    "رغيفان",
+    "أرغفة",
+    "رغيفًا"
+   ],
+   "round": "int",
+   "scale": "linear",
+   "keepDays": 3,
+   "freezable": true,
+   "allergens": [
+    "gluten"
+   ],
+   "sold": {
+    "type": "pack",
+    "size": 12,
+    "label": "كيس 12 رغيفًا"
+   },
+   "price": {
+    "value": 0.175,
+    "source": "verified",
+    "date": "2026-10-18",
+    "store": "lulu",
+    "url": "https://gcc.luluhypermarket.com/en-om/lulu-arabic-bread-12-pcs/p/1193940"
+   }
+  },
+  {
+   "id": "tortilla",
+   "name": "تورتيلا متوسطة",
+   "cat": "bakery",
+   "unit": "pcs",
+   "forms": [
+    "قطعة",
+    "قطعتان",
+    "قطع",
+    "قطعة"
+   ],
+   "round": "int",
+   "scale": "linear",
+   "keepDays": 14,
+   "allergens": [
+    "gluten"
+   ],
+   "sold": {
+    "type": "pack",
+    "size": 6,
+    "label": "عبوة 6 قطع"
+   },
+   "price": {
+    "value": 1.215,
+    "source": "verified",
+    "date": "2026-10-18",
+    "store": "lulu",
+    "url": "https://gcc.luluhypermarket.com/en-om/mission-original-tortilla-wraps-large-6-pcs-378-g/p/1486499",
+    "note": "Mission Original Tortilla Wraps Large 6 pcs"
+   }
+  },
+  {
+   "id": "tomato",
+   "name": "طماطم",
+   "cat": "produce",
+   "unit": "pcs",
+   "forms": [
+    "حبة",
+    "حبتان",
+    "حبات",
+    "حبة"
+   ],
+   "round": "int",
+   "pieceG": 150,
+   "scale": "linear",
+   "keepDays": 6,
+   "sold": {
+    "type": "perKg"
+   },
+   "price": {
+    "value": 0.75,
+    "source": "verified",
+    "date": "2026-10-18",
+    "store": "lulu",
+    "url": "https://gcc.luluhypermarket.com/en-om/tomato-1-kg/p/1962513"
+   }
+  },
+  {
+   "id": "cucumber",
+   "name": "خيار",
+   "cat": "produce",
+   "unit": "pcs",
+   "forms": [
+    "حبة",
+    "حبتان",
+    "حبات",
+    "حبة"
+   ],
+   "round": "int",
+   "pieceG": 120,
+   "scale": "linear",
+   "keepDays": 6,
+   "sold": {
+    "type": "perKg"
+   },
+   "price": {
+    "value": 0.545,
+    "source": "verified",
+    "date": "2026-10-18",
+    "store": "lulu",
+    "url": "https://gcc.luluhypermarket.com/en-om/cucumber-1-kg/p/1792627",
+    "note": "Cucumber 1 kg"
+   }
+  },
+  {
+   "id": "bell_pepper",
+   "name": "فلفل حلو",
+   "cat": "produce",
+   "unit": "pcs",
+   "forms": [
+    "حبة",
+    "حبتان",
+    "حبات",
+    "حبة"
+   ],
+   "round": "int",
+   "pieceG": 160,
+   "scale": "linear",
+   "keepDays": 7,
+   "sold": {
+    "type": "perKg"
+   },
+   "price": {
+    "value": 0.99,
+    "source": "verified",
+    "date": "2026-10-18",
+    "store": "lulu",
+    "url": "https://gcc.luluhypermarket.com/en-om/capsicum-green-1-kg/p/1962518",
+    "note": "Capsicum Green 1 kg"
+   }
+  },
+  {
+   "id": "carrot",
+   "name": "جزر",
+   "cat": "produce",
+   "unit": "pcs",
+   "forms": [
+    "حبة",
+    "حبتان",
+    "حبات",
+    "حبة"
+   ],
+   "round": "int",
+   "pieceG": 90,
+   "scale": "linear",
+   "keepDays": 21,
+   "sold": {
+    "type": "perKg"
+   },
+   "price": {
+    "value": 1.09,
+    "source": "verified",
+    "date": "2026-10-18",
+    "store": "lulu",
+    "url": "https://gcc.luluhypermarket.com/en-om/p/18892-ea/?convtobuom=500",
+    "note": "Carrots Australia 500 g = 0.545؛ للكيلو 0.545 × 2"
+   }
+  },
+  {
+   "id": "onion",
+   "name": "بصل",
+   "cat": "produce",
+   "unit": "pcs",
+   "forms": [
+    "حبة",
+    "حبتان",
+    "حبات",
+    "حبة"
+   ],
+   "round": "half",
+   "pieceG": 150,
+   "scale": "partial",
+   "keepDays": 30,
+   "sold": {
+    "type": "perKg"
+   },
+   "price": {
+    "value": 0.525,
+    "source": "verified",
+    "date": "2026-10-18",
+    "store": "lulu",
+    "url": "https://gcc.luluhypermarket.com/en-om/p/468469-ea",
+    "note": "Onion 1 kg"
+   }
+  },
+  {
+   "id": "potato",
+   "name": "بطاطس",
+   "cat": "produce",
+   "unit": "g",
+   "scale": "linear",
+   "keepDays": 30,
+   "sold": {
+    "type": "perKg"
+   },
+   "price": {
+    "value": 0.47,
+    "source": "verified",
+    "date": "2026-10-18",
+    "store": "lulu",
+    "url": "https://gcc.luluhypermarket.com/en-om/potato-1-kg/p/1962515",
+    "note": "Potato 1 kg"
+   }
+  },
+  {
+   "id": "lettuce",
+   "name": "خس",
+   "cat": "produce",
+   "unit": "pcs",
+   "forms": [
+    "رأس",
+    "رأسان",
+    "رؤوس",
+    "رأسًا"
+   ],
+   "round": "half",
+   "scale": "linear",
+   "keepDays": 4,
+   "sold": {
+    "type": "perPiece",
+    "label": "رأس آيسبرغ (نحو 500 غ)"
+   },
+   "price": {
+    "value": 0.655,
+    "source": "verified",
+    "date": "2026-10-18",
+    "store": "lulu",
+    "url": "https://gcc.luluhypermarket.com/en-om/p/19084-ea/?convtobuom=500",
+    "note": "Iceberg Lettuce 500 g"
+   }
+  },
+  {
+   "id": "cabbage",
+   "name": "ملفوف",
+   "cat": "produce",
+   "unit": "g",
+   "scale": "linear",
+   "keepDays": 14,
+   "sold": {
+    "type": "perKg"
+   },
+   "price": {
+    "value": 0.4,
+    "source": "estimate"
+   }
+  },
+  {
+   "id": "mushroom",
+   "name": "فطر طازج",
+   "cat": "produce",
+   "unit": "g",
+   "scale": "linear",
+   "keepDays": 4,
+   "sold": {
+    "type": "pack",
+    "size": 250,
+    "label": "علبة 250 غ"
+   },
+   "price": {
+    "value": 0.55,
+    "source": "estimate"
+   }
+  },
+  {
+   "id": "parsley",
+   "name": "بقدونس",
+   "cat": "produce",
+   "unit": "pcs",
+   "forms": [
+    "حزمة",
+    "حزمتان",
+    "حزم",
+    "حزمة"
+   ],
+   "round": "half",
+   "scale": "partial",
+   "keepDays": 5,
+   "sold": {
+    "type": "perPiece",
+    "label": "حزمة"
+   },
+   "price": {
+    "value": 0.1,
+    "source": "estimate"
+   }
+  },
+  {
+   "id": "garlic",
+   "name": "ثوم",
+   "cat": "produce",
+   "unit": "pcs",
+   "forms": [
+    "فص",
+    "فصّان",
+    "فصوص",
+    "فصًا"
+   ],
+   "round": "int",
+   "scale": "partial",
+   "keepDays": 30,
+   "sold": {
+    "type": "pack",
+    "size": 10,
+    "label": "رأس (نحو 10 فصوص)"
+   },
+   "price": {
+    "value": 0.1,
+    "source": "estimate"
+   }
+  },
+  {
+   "id": "lemon",
+   "name": "ليمون",
+   "cat": "produce",
+   "unit": "pcs",
+   "forms": [
+    "حبة",
+    "حبتان",
+    "حبات",
+    "حبة"
+   ],
+   "round": "half",
+   "pieceG": 80,
+   "scale": "partial",
+   "keepDays": 21,
+   "sold": {
+    "type": "perKg"
+   },
+   "price": {
+    "value": 0.99,
+    "source": "verified",
+    "date": "2026-10-18",
+    "store": "lulu",
+    "url": "https://gcc.luluhypermarket.com/en-om/lemon-bag-1-kg/p/829111",
+    "note": "Lemon Bag 1 kg"
+   }
+  },
+  {
+   "id": "tuna",
+   "name": "تونة معلبة 170 غ",
+   "cat": "pantry",
+   "unit": "pcs",
+   "forms": [
+    "علبة",
+    "علبتان",
+    "علب",
+    "علبة"
+   ],
+   "round": "int",
+   "scale": "linear",
+   "keepDays": 365,
+   "allergens": [
+    "fish"
+   ],
+   "sold": {
+    "type": "pack",
+    "size": 1,
+    "label": "علبة 170 غ"
+   },
+   "price": {
+    "value": 0.73,
+    "source": "verified",
+    "date": "2026-10-18",
+    "store": "lulu",
+    "url": "https://gcc.luluhypermarket.com/en-om/simak-skipjack-tuna-chunks-in-sunflower-oil-170-g/p/2322274/"
+   }
+  },
+  {
+   "id": "chickpeas_can",
+   "name": "حمص حب مطهو (معلب 400 غ)",
+   "cat": "pantry",
+   "unit": "pcs",
+   "forms": [
+    "علبة",
+    "علبتان",
+    "علب",
+    "علبة"
+   ],
+   "round": "int",
+   "scale": "linear",
+   "keepDays": 365,
+   "sold": {
+    "type": "pack",
+    "size": 1,
+    "label": "علبة 400 غ"
+   },
+   "price": {
+    "value": 0.28,
+    "source": "verified",
+    "date": "2026-10-18",
+    "store": "lulu",
+    "url": "https://gcc.luluhypermarket.com/en-om/al-mazraa-chick-peas-400-g/p/313958"
+   }
+  },
+  {
+   "id": "fava_can",
+   "name": "فول مدمس (معلب 450 غ)",
+   "cat": "pantry",
+   "unit": "pcs",
+   "forms": [
+    "علبة",
+    "علبتان",
+    "علب",
+    "علبة"
+   ],
+   "round": "int",
+   "scale": "linear",
+   "keepDays": 365,
+   "sold": {
+    "type": "pack",
+    "size": 1,
+    "label": "علبة 450 غ"
+   },
+   "price": {
+    "value": 0.29,
+    "source": "verified",
+    "date": "2026-10-18",
+    "store": "lulu",
+    "url": "https://gcc.luluhypermarket.com/en-om/lulu-foul-medammes-450-g/p/404296",
+    "note": "LuLu Foul Medammes 450 g"
+   }
+  },
+  {
+   "id": "corn_can",
+   "name": "ذرة حلوة (علبة صغيرة)",
+   "cat": "pantry",
+   "unit": "pcs",
+   "forms": [
+    "علبة",
+    "علبتان",
+    "علب",
+    "علبة"
+   ],
+   "round": "int",
+   "scale": "linear",
+   "keepDays": 365,
+   "sold": {
+    "type": "pack",
+    "size": 1,
+    "label": "علبة 200 غ"
+   },
+   "price": {
+    "value": 0.39,
+    "source": "verified",
+    "date": "2026-10-18",
+    "store": "lulu",
+    "url": "https://gcc.luluhypermarket.com/en-om/california-garden-whole-kernel-sweet-corn-200-g/p/728442",
+    "note": "California Garden Whole Kernel Sweet Corn 200 g"
+   }
+  },
+  {
+   "id": "passata_can",
+   "name": "طماطم مطحونة/صلصة سادة (400 غ)",
+   "cat": "pantry",
+   "unit": "pcs",
+   "forms": [
+    "علبة",
+    "علبتان",
+    "علب",
+    "علبة"
+   ],
+   "round": "int",
+   "scale": "linear",
+   "keepDays": 365,
+   "sold": {
+    "type": "pack",
+    "size": 1,
+    "label": "علبة 400 غ"
+   },
+   "price": {
+    "value": 0.605,
+    "source": "verified",
+    "date": "2026-10-18",
+    "store": "lulu",
+    "url": "https://gcc.luluhypermarket.com/en-om/valle-del-cilento-organic-chopped-tomatoes-400-g/p/1702467",
+    "note": "Valle Del Cilento Organic Chopped Tomatoes 400 g"
+   }
+  },
+  {
+   "id": "tomato_paste",
+   "name": "معجون طماطم (علبة 70 غ)",
+   "cat": "pantry",
+   "unit": "pcs",
+   "forms": [
+    "علبة",
+    "علبتان",
+    "علب",
+    "علبة"
+   ],
+   "round": "int",
+   "scale": "partial",
+   "keepDays": 365,
+   "sold": {
+    "type": "pack",
+    "size": 1,
+    "label": "علبة 70 غ"
+   },
+   "price": {
+    "value": 0.1,
+    "source": "estimate"
+   }
+  },
+  {
+   "id": "pasta_sauce",
+   "name": "صلصة مكرونة بالطماطم",
+   "cat": "pantry",
+   "unit": "g",
+   "scale": "linear",
+   "keepDays": 365,
+   "sold": {
+    "type": "pack",
+    "size": 500,
+    "label": "برطمان 500 غ"
+   },
+   "price": {
+    "value": 0.75,
+    "source": "estimate"
+   }
+  },
+  {
+   "id": "pizza_sauce",
+   "name": "صلصة بيتزا",
+   "cat": "pantry",
+   "unit": "g",
+   "scale": "linear",
+   "keepDays": 365,
+   "sold": {
+    "type": "pack",
+    "size": 340,
+    "label": "برطمان 340 غ"
+   },
+   "price": {
+    "value": 0.7,
+    "source": "estimate"
+   }
+  },
+  {
+   "id": "olives",
+   "name": "زيتون أسود شرائح",
+   "cat": "pantry",
+   "unit": "g",
+   "scale": "linear",
+   "keepDays": 365,
+   "sold": {
+    "type": "pack",
+    "size": 200,
+    "label": "برطمان 200 غ"
+   },
+   "price": {
+    "value": 0.55,
+    "source": "estimate"
+   }
+  },
+  {
+   "id": "tahini",
+   "name": "طحينة",
+   "cat": "pantry",
+   "unit": "g",
+   "scale": "linear",
+   "keepDays": 365,
+   "allergens": [
+    "sesame"
+   ],
+   "sold": {
+    "type": "pack",
+    "size": 450,
+    "label": "برطمان 450 غ"
+   },
+   "price": {
+    "value": 1.325,
+    "source": "verified",
+    "date": "2026-10-18",
+    "store": "lulu",
+    "url": "https://gcc.luluhypermarket.com/en-om/chtaura-tahina-450-g/p/408665",
+    "note": "Chtaura Tahina 450 g"
+   }
+  },
+  {
+   "id": "red_lentils",
+   "name": "عدس أحمر جاف",
+   "cat": "pantry",
+   "unit": "g",
+   "scale": "linear",
+   "keepDays": 365,
+   "sold": {
+    "type": "pack",
+    "size": 1000,
+    "label": "كيس 1 كغ"
+   },
+   "price": {
+    "value": 0.65,
+    "source": "estimate"
+   }
+  },
+  {
+   "id": "rice",
+   "name": "أرز بسمتي",
+   "cat": "pantry",
+   "unit": "g",
+   "scale": "linear",
+   "keepDays": 365,
+   "sold": {
+    "type": "pack",
+    "size": 2000,
+    "label": "كيس 2 كغ"
+   },
+   "price": {
+    "value": 1.99,
+    "source": "verified",
+    "date": "2026-10-18",
+    "store": "lulu",
+    "url": "https://gcc.luluhypermarket.com/en-om/lulu-excel-basmati-rice-2-kg/p/901330",
+    "note": "LuLu Excel Basmati Rice 2 kg"
+   }
+  },
+  {
+   "id": "pasta",
+   "name": "مكرونة جافة",
+   "cat": "pantry",
+   "unit": "g",
+   "scale": "linear",
+   "keepDays": 365,
+   "allergens": [
+    "gluten"
+   ],
+   "sold": {
+    "type": "pack",
+    "size": 500,
+    "label": "كيس 500 غ"
+   },
+   "price": {
+    "value": 0.3,
+    "source": "estimate"
+   }
+  },
+  {
+   "id": "frozen_peas",
+   "name": "بازلاء مجمدة",
+   "cat": "pantry",
+   "unit": "g",
+   "scale": "linear",
+   "keepDays": 180,
+   "frozen": true,
+   "bulk": true,
+   "sold": {
+    "type": "pack",
+    "size": 450,
+    "label": "كيس 450 غ"
+   },
+   "price": {
+    "value": 0.45,
+    "source": "estimate"
+   }
+  },
+  {
+   "id": "olive_oil",
+   "name": "زيت زيتون",
+   "cat": "staples",
+   "unit": "ml",
+   "scale": "partial",
+   "keepDays": 365,
+   "staple": true,
+   "sold": {
+    "type": "pack",
+    "size": 500,
+    "label": "عبوة 500 مل"
+   },
+   "price": {
+    "value": 2.3,
+    "source": "estimate"
+   }
+  },
+  {
+   "id": "oil",
+   "name": "زيت طبخ",
+   "cat": "staples",
+   "unit": "ml",
+   "scale": "partial",
+   "keepDays": 365,
+   "staple": true,
+   "sold": {
+    "type": "pack",
+    "size": 1500,
+    "label": "عبوة 1.5 لتر"
+   },
+   "price": {
+    "value": 1.925,
+    "source": "verified",
+    "date": "2026-10-18",
+    "store": "lulu",
+    "url": "https://gcc.luluhypermarket.com/en-om/noor-sunflower-oil-1-5-litres/p/1681165",
+    "note": "Noor Sunflower Oil 1.5 Litres"
+   }
+  },
+  {
+   "id": "salt",
+   "name": "ملح",
+   "cat": "staples",
+   "unit": "none",
+   "scale": "fixed",
+   "keepDays": 999,
+   "staple": true
+  },
+  {
+   "id": "black_pepper",
+   "name": "فلفل أسود",
+   "cat": "staples",
+   "unit": "none",
+   "scale": "fixed",
+   "keepDays": 999,
+   "staple": true
+  },
+  {
+   "id": "cumin",
+   "name": "كمون",
+   "cat": "staples",
+   "unit": "none",
+   "scale": "fixed",
+   "keepDays": 999,
+   "staple": true
+  },
+  {
+   "id": "paprika",
+   "name": "بابريكا",
+   "cat": "staples",
+   "unit": "none",
+   "scale": "fixed",
+   "keepDays": 999,
+   "staple": true
+  },
+  {
+   "id": "coriander_ground",
+   "name": "كزبرة مطحونة",
+   "cat": "staples",
+   "unit": "none",
+   "scale": "fixed",
+   "keepDays": 999,
+   "staple": true
+  },
+  {
+   "id": "turmeric",
+   "name": "كركم",
+   "cat": "staples",
+   "unit": "none",
+   "scale": "fixed",
+   "keepDays": 999,
+   "staple": true
+  },
+  {
+   "id": "rice_spice",
+   "name": "بهارات أرز",
+   "cat": "staples",
+   "unit": "none",
+   "scale": "fixed",
+   "keepDays": 999,
+   "staple": true
+  },
+  {
+   "id": "oregano",
+   "name": "أوريغانو/أعشاب مجففة",
+   "cat": "staples",
+   "unit": "none",
+   "scale": "fixed",
+   "keepDays": 999,
+   "staple": true
+  },
+  {
+   "id": "zaatar",
+   "name": "زعتر",
+   "cat": "staples",
+   "unit": "none",
+   "scale": "fixed",
+   "keepDays": 999,
+   "staple": true,
+   "mayContain": [
+    "sesame"
+   ]
+  },
+  {
+   "id": "bzar",
+   "name": "بزار عُماني",
+   "cat": "staples",
+   "unit": "none",
+   "scale": "fixed",
+   "keepDays": 999,
+   "staple": true
+  },
+  {
+   "id": "loomi",
+   "name": "لومي (ليمون مجفف)",
+   "cat": "staples",
+   "unit": "pcs",
+   "forms": [
+    "حبة",
+    "حبتان",
+    "حبات",
+    "حبة"
+   ],
+   "round": "int",
+   "scale": "partial",
+   "keepDays": 999,
+   "staple": true
+  },
+  {
+   "id": "water",
+   "name": "ماء",
+   "cat": "staples",
+   "unit": "ml",
+   "scale": "linear",
+   "keepDays": 999,
+   "nobuy": true
+  }
+ ]
+}
