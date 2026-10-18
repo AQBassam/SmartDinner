@@ -37,6 +37,10 @@ const KIND: Record<DayTask['kind'], { emoji: string; bg: string }> = {
   wash: { emoji: '💧', bg: '#e3f0f7' },
 };
 
+function moodCount(p: RecipePreset): number {
+  return RECIPES.filter((r) => (!p.tag || r.tags.includes(p.tag)) && (!p.max || r.total <= p.max)).length;
+}
+
 const weekdayShort = new Intl.DateTimeFormat('ar-OM-u-nu-latn', { weekday: 'long', timeZone: 'UTC' });
 
 export function TodayTab({ store, today, openRecipe, cook, go, browse }: Props) {
@@ -147,14 +151,18 @@ export function TodayTab({ store, today, openRecipe, cook, go, browse }: Props) 
   };
 
   // the next dinners after tonight, and dishes worth trying that are not in the plan
+  const heroR = tonightR ?? (!ended ? RECIPE[state.nights[0]] : null);
   const heroNight = tonight ? tonight.night : !ended && dayIdx < 0 ? 1 : null;
   const upcoming = state.nights.map((rid, i) => ({ rid, night: i + 1, date: gen.nightDates[i] }))
     .filter((x) => x.date > today && x.night !== heroNight).slice(0, 3);
-  // discovery shows only dishes that are not in the plan, favourites first; planned dishes already appear above or in the plan
+  // discovery: dishes outside the plan first (favourites first); if fewer than four, the plan's furthest
+  // nights fill the row, labelled with their day, never one already shown in the hero or the next days
   const inPlan = new Set(state.nights);
+  const shown = new Set([heroR?.id, ...upcoming.map((u) => u.rid)]);
   const suggestions = [
     ...RECIPES.filter((r) => state.favorites.includes(r.id) && !inPlan.has(r.id)),
     ...RECIPES.filter((r) => !inPlan.has(r.id) && !state.favorites.includes(r.id)),
+    ...[...state.nights].reverse().map((id) => RECIPE[id]).filter((r, k, arr) => r && !shown.has(r.id) && arr.indexOf(r) === k),
   ].slice(0, 4);
 
   // what tonight still needs from the shop
@@ -164,205 +172,219 @@ export function TodayTab({ store, today, openRecipe, cook, go, browse }: Props) 
     return b ? b.lines.filter((l) => ids.has(l.ing.id) && needsBuying(l) && !state.checked[l.key]).length : 0;
   })() : 0;
 
-  const heroR = tonightR ?? (!ended ? RECIPE[state.nights[0]] : null);
 
+  // one row per kind of content, so the columns of a row always share a top edge (desktop);
+  // on a phone the same rows simply stack in this order
+  const taskCols = sections.length;
   return (
-    <div className="space-y-8">
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:gap-8">
-        {/* ================================================ main column */}
-        <div className="min-w-0 space-y-6">
-          {/* ------------------------------------------------ tonight */}
-          <section key={heroR?.id ?? 'none'} className="rise overflow-hidden rounded-[28px] border border-line bg-paper shadow-[var(--shadow-card)] md:grid md:grid-cols-2">
-            {heroR ? (
-              <>
-                <button onClick={() => openRecipe(heroR.id)} className="dish-card block w-full md:order-2" aria-label={`صورة ${heroR.title}`}>
-                  <RecipeImage recipe={heroR} variant="hero" priority className="aspect-[3/2] md:aspect-auto md:h-full md:min-h-[340px]" />
-                </button>
-                <div className="flex flex-col p-5 md:order-1 md:p-7">
-                  <p className="flex items-center gap-2 text-[14px] font-bold text-copper">
-                    <span className="size-2 rounded-full bg-saffron" aria-hidden="true" />
-                    {tonightR ? 'عشاء الليلة' : `أول عشاء في خطتك ${relDay(state.startDate, today)}`}
+    <div className="space-y-9">
+      {/* ------------------------------------------------ tonight */}
+      <section key={heroR?.id ?? 'none'} className="rise overflow-hidden rounded-[28px] border border-line bg-paper shadow-[var(--shadow-card)] md:grid md:grid-cols-2 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+        {heroR ? (
+          <>
+            <button onClick={() => openRecipe(heroR.id)} className="dish-card block w-full md:order-2" aria-label={`صورة ${heroR.title}`}>
+              <RecipeImage recipe={heroR} variant="hero" priority className="aspect-[3/2] md:aspect-auto md:h-full md:min-h-[360px]" />
+            </button>
+            <div className="flex flex-col p-5 md:order-1 md:p-7 lg:p-9">
+              <p className="flex items-center gap-2 text-[14px] font-bold text-copper">
+                <span className="size-2 rounded-full bg-saffron" aria-hidden="true" />
+                {tonightR ? 'عشاء الليلة' : `أول عشاء في خطتك ${relDay(state.startDate, today)}`}
+              </p>
+              <h2 className="mt-1.5 text-[26px] font-extrabold leading-[1.25] md:text-[30px]">{heroR.title}</h2>
+              <p className="mt-1.5 text-[15px] leading-relaxed text-ink/75">{heroR.subtitle}</p>
+              {tonight && tonightR ? (
+                <>
+                  <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
+                    <Fact label="ابدأ الطهي" value={fmtTime(tonight.start)} />
+                    <Fact label="العشاء" value={fmtTime(state.times.dinner)} />
+                    <Fact label="عمل فعلي" value={`${tonightR.active} د`} />
+                  </dl>
+                  <p className="mt-3 text-[14px] font-medium">{cookLine(now, tonight.start, state.times.dinner, state.times.prep)}</p>
+                  <p className="mt-1 text-[13px] text-muted">
+                    {missing > 0
+                      ? <>ينقص {arCount(missing, ['مكوّن', 'مكوّنان', 'مكوّنات', 'مكوّنًا'])} في <button className="link-inline" onClick={() => go('shop')}>قائمة التسوق</button>.</>
+                      : 'مكوناتها كلها في البيت حسب قائمة التسوق.'}
                   </p>
-                  <h2 className="mt-1.5 text-[26px] font-extrabold leading-[1.25] md:text-[30px]">{heroR.title}</h2>
-                  <p className="mt-1.5 text-[15px] leading-relaxed text-ink/75">{heroR.subtitle}</p>
-                  {tonight && tonightR ? (
-                    <>
-                      <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
-                        <Fact label="ابدأ الطهي" value={fmtTime(tonight.start)} />
-                        <Fact label="العشاء" value={fmtTime(state.times.dinner)} />
-                        <Fact label="عمل فعلي" value={`${tonightR.active} د`} />
-                      </dl>
-                      <p className="mt-3 text-[14px] font-medium">{cookLine(now, tonight.start, state.times.dinner, state.times.prep)}</p>
-                      <p className="mt-1 text-[13px] text-muted">
-                        {missing > 0
-                          ? <>ينقص {arCount(missing, ['مكوّن', 'مكوّنان', 'مكوّنات', 'مكوّنًا'])} في <button className="link-inline" onClick={() => go('shop')}>قائمة التسوق</button>.</>
-                          : 'مكوناتها كلها في البيت حسب قائمة التسوق.'}
-                      </p>
-                      <div className="mt-auto flex flex-wrap gap-2 pt-4">
-                        <Button variant="primary" icon="chef" className="flex-1" onClick={() => cook(tonightR.id)}>ابدأ التحضير</Button>
-                        <Button variant="outline" onClick={() => openRecipe(tonightR.id)}>عرض الوصفة</Button>
-                      </div>
-                      {options.length > 0 ? (
-                        <button onClick={() => setSosOpen(true)}
-                          className="mt-2 inline-flex min-h-10 items-center gap-2 self-start rounded-full px-1 text-[14px] font-bold text-ink/80 underline decoration-line decoration-2 underline-offset-4 hover:text-ink">
-                          <span className="emoji" aria-hidden="true">😮‍💨</span> يوم متعب؟ ما عندي طاقة الليلة
-                        </button>
-                      ) : (
-                        <p className="mt-3 text-[13px] text-muted">وجبة الليلة من الوجبات السريعة أصلًا، فلا بديل أسرع منها.</p>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <p className="mt-3 text-[14.5px] leading-relaxed text-ink/80">
-                        {dayIdx === -1 ? 'اليوم للتسوق وتجهيز بسيط في المساء، فيكون عشاء الغد سهلًا.' : fmtDate(state.startDate)}
-                      </p>
-                      <div className="mt-auto flex flex-wrap gap-2 pt-4">
-                        <Button variant="primary" className="flex-1" onClick={() => openRecipe(heroR.id)}>عرض الوصفة</Button>
-                        <Button variant="outline" onClick={() => browse({ max: 30 })}>عشاء الليلة خارج الخطة</Button>
-                      </div>
-                      <p className="mt-2 text-[12.5px] text-muted">لا عشاء مخططًا الليلة؛ الخطة تبدأ {relDay(state.startDate, today)}.</p>
-                    </>
-                  )}
-                </div>
-              </>
-            ) : (
-              <div className="p-6 md:col-span-2">
-                <h2 className="text-[24px] font-extrabold">انتهت الخطة</h2>
-                <p className="mt-1 text-[14.5px] text-ink/80">ابدأ دورة جديدة بالوصفات نفسها أو عدّلها من تبويب الخطة.</p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Button variant="primary" onClick={() => {
-                    set({ startDate: addDays(today, 1), checked: {}, custom: state.custom.map((c) => ({ ...c, checked: false })) });
-                    toast('تبدأ دورة جديدة غدًا.');
-                  }}>ابدأ دورة جديدة غدًا</Button>
-                  <Button variant="outline" onClick={() => browse({ max: 30 })}>عشاء الليلة: وصفات سريعة</Button>
-                </div>
-              </div>
-            )}
-          </section>
-
-          {missedThaw.length > 0 && (
-            <div className="flex items-start gap-3 rounded-2xl border border-ice/20 bg-ice-soft p-4 text-[14px] leading-relaxed">
-              <Glyph emoji="❄️" bg="#fff" />
-              {!forgot ? (
-                <div className="flex-1">
-                  <p className="font-bold">هل نُقلت حصة {tonightR?.title} إلى الثلاجة أمس؟</p>
-                  <div className="mt-2 flex gap-2">
-                    <Button variant="soft" className="flex-1" onClick={() => set((s) => {
-                      let p = s.prepDone;
-                      for (const t of missedThaw) p = togglePrep(p, t.key, today);
-                      return { prepDone: p };
-                    })}>نعم</Button>
-                    <Button variant="outline" className="flex-1" onClick={() => setForgot(true)}>نسيت</Button>
+                  <div className="mt-auto flex flex-wrap gap-2 pt-4">
+                    <Button variant="primary" icon="chef" className="flex-1" onClick={() => cook(tonightR.id)}>ابدأ التحضير</Button>
+                    <Button variant="outline" onClick={() => openRecipe(tonightR.id)}>عرض الوصفة</Button>
                   </div>
-                </div>
+                  {options.length > 0 ? (
+                    <button onClick={() => setSosOpen(true)}
+                      className="mt-2 inline-flex min-h-10 items-center gap-2 self-start rounded-full px-1 text-[14px] font-bold text-ink/80 underline decoration-line decoration-2 underline-offset-4 hover:text-ink">
+                      <span className="emoji" aria-hidden="true">😮‍💨</span> يوم متعب؟ ما عندي طاقة الليلة
+                    </button>
+                  ) : (
+                    <p className="mt-3 text-[13px] text-muted">وجبة الليلة من الوجبات السريعة أصلًا، فلا بديل أسرع منها.</p>
+                  )}
+                </>
               ) : (
-                <div className="flex-1">
-                  <p className="font-bold">الإذابة السريعة الآمنة</p>
-                  <p className="mt-1">تُوضع الحصة في كيس محكم داخل ماء بارد، ويُغيَّر الماء كل 30 دقيقة، وتُطبخ فور ذوبانها. كيس مسطح 500 غ يذوب في نحو ساعة، و1–1.5 كغ في 2–3 ساعات. لا ماء ساخن ولا سطح المطبخ.</p>
-                  {options.length > 0 && <button className="mt-2 font-bold text-ice underline" onClick={() => setSosOpen(true)}>أو وجبة سريعة الليلة بدلها</button>}
-                </div>
+                <>
+                  <p className="mt-3 text-[14.5px] leading-relaxed text-ink/80">
+                    {dayIdx === -1 ? 'اليوم للتسوق وتجهيز بسيط في المساء، فيكون عشاء الغد سهلًا.' : fmtDate(state.startDate)}
+                  </p>
+                  <div className="mt-auto flex flex-wrap gap-2 pt-4">
+                    <Button variant="primary" className="flex-1" onClick={() => openRecipe(heroR.id)}>عرض الوصفة</Button>
+                    <Button variant="outline" onClick={() => browse({ max: 30 })}>عشاء الليلة خارج الخطة</Button>
+                  </div>
+                  <p className="mt-2 text-[12.5px] text-muted">لا عشاء مخططًا الليلة؛ الخطة تبدأ {relDay(state.startDate, today)}.</p>
+                </>
               )}
             </div>
-          )}
-
-          {/* ------------------------------------------------ today's prep */}
-          <div>
-            <h3 className="px-1 text-[19px] font-extrabold">مهام اليوم</h3>
-            <p className="mb-3 mt-0.5 px-1 text-[13.5px] leading-relaxed text-muted">
-              دقائق قليلة في أوقات موجودة أصلًا في يومك، فلا يأخذ العشاء من وقتك أكثر من مدة طبخه.
-            </p>
-            {sections.length > 0 ? (
-              <ol className="space-y-3" aria-label="مهام اليوم">
-                {sections.map((sec, i) => {
-                  const finished = i < current && sec.tasks.length > 0 && sec.tasks.every(done);
-                  return finished ? (
-                    <li key={sec.id}>
-                      <details className="rounded-[22px] border border-line bg-paper px-4">
-                        <summary className="flex min-h-12 cursor-pointer items-center gap-2 text-[14px] font-bold text-muted">
-                          <span className="grid size-6 place-items-center rounded-full bg-teal text-white"><Icon name="check" className="size-3.5" /></span>
-                          <span className="num text-copper">{fmtTime(sec.time)}</span> {sec.label}: تمت
-                        </summary>
-                        <div className="pb-4">{sec.node}</div>
-                      </details>
-                    </li>
-                  ) : (
-                    <li key={sec.id} aria-current={i === current ? 'step' : undefined}
-                      className={`rounded-[22px] border bg-paper p-4 ${i === current ? 'border-saffron shadow-[var(--shadow-card)] ring-2 ring-saffron/45' : 'border-line'} ${i < current ? 'opacity-80' : ''}`}>
-                      {sec.node}
-                    </li>
-                  );
-                })}
-              </ol>
-            ) : (
-              <p className="rounded-2xl border border-dashed border-line bg-paper px-4 py-5 text-center text-[14px] text-muted">لا مهام اليوم.</p>
-            )}
-          </div>
-        </div>
-
-        {/* ================================================ side column */}
-        <aside className="min-w-0 space-y-6">
-          {upcoming.length > 0 && (
-            <section>
-              <div className="mb-2 flex items-baseline justify-between px-1">
-                <h3 className="text-[19px] font-extrabold">خطتك للأيام القادمة</h3>
-                <button className="link text-[13.5px]" onClick={() => go('plan')}>الخطة كاملة</button>
-              </div>
-              <ul className="space-y-2">
-                {upcoming.map((x) => {
-                  const r = RECIPE[x.rid];
-                  return (
-                    <li key={x.night}>
-                      <button onClick={() => openRecipe(x.rid)} className="dish-card flex w-full items-center gap-3 overflow-hidden rounded-2xl border border-line bg-paper text-start">
-                        <RecipeImage recipe={r} className="h-[76px] w-[96px] shrink-0" plateSize={52} />
-                        <span className="min-w-0 flex-1 py-2">
-                          <span className="block text-[12.5px] font-bold text-copper">{dayName(x.date)}</span>
-                          <span className="block truncate text-[15px] font-bold">{r.title}</span>
-                          <span className="block text-[12.5px] text-muted"><span className="num">{r.total}</span> دقيقة</span>
-                        </span>
-                        <Icon name="down" className="me-3 size-4 rotate-90 text-muted" />
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
-          )}
-
-          <section>
-            <h3 className="mb-2 px-1 text-[19px] font-extrabold">كم من الوقت لديك؟</h3>
-            <div className="scroll-x -mx-4 flex gap-2 px-4 lg:mx-0 lg:grid lg:grid-cols-2 lg:px-0">
-              {MOODS.map((m) => (
-                <button key={m.id} onClick={() => browse(m.preset)}
-                  className="flex min-h-12 shrink-0 items-center gap-2.5 rounded-2xl border border-line bg-paper px-3 py-2.5 text-start text-[14px] font-bold transition hover:border-teal">
-                  <span className="emoji text-[22px]" aria-hidden="true">{m.emoji}</span>{m.label}
-                </button>
-              ))}
+          </>
+        ) : (
+          <div className="p-6 md:col-span-2">
+            <h2 className="text-[24px] font-extrabold">انتهت الخطة</h2>
+            <p className="mt-1 text-[14.5px] text-ink/80">ابدأ دورة جديدة بالوصفات نفسها أو عدّلها من تبويب الخطة.</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button variant="primary" onClick={() => {
+                set({ startDate: addDays(today, 1), checked: {}, custom: state.custom.map((c) => ({ ...c, checked: false })) });
+                toast('تبدأ دورة جديدة غدًا.');
+              }}>ابدأ دورة جديدة غدًا</Button>
+              <Button variant="outline" onClick={() => browse({ max: 30 })}>عشاء الليلة: وصفات سريعة</Button>
             </div>
-          </section>
+          </div>
+        )}
+      </section>
 
-          {nextShop && (
-            <button onClick={() => go('shop')} className="flex w-full items-center gap-3 rounded-2xl bg-saffron-soft px-4 py-3.5 text-start">
-              <Glyph emoji="🛒" bg="#fff" size={40} />
-              <span className="flex-1">
-                <span className="block text-[15px] font-bold">التسوق القادم {relDay(nextShop.date, today)}</span>
-                <span className="block text-[13px] text-muted">لعشاءات {relRange(nextShop.firstNight, nextShop.lastNight)}</span>
-              </span>
-              <span className="num text-[15px] font-extrabold text-copper">{omr(nextShop.total)}</span>
-            </button>
+      {missedThaw.length > 0 && (
+        <div className="flex items-start gap-3 rounded-2xl border border-ice/20 bg-ice-soft p-4 text-[14px] leading-relaxed lg:items-center">
+          <Glyph emoji="❄️" bg="#fff" />
+          {!forgot ? (
+            <div className="flex flex-1 flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+              <p className="font-bold">هل نُقلت حصة {tonightR?.title} إلى الثلاجة أمس؟</p>
+              <div className="flex gap-2">
+                <Button variant="soft" className="flex-1 lg:w-32 lg:flex-none" onClick={() => set((s) => {
+                  let p = s.prepDone;
+                  for (const t of missedThaw) p = togglePrep(p, t.key, today);
+                  return { prepDone: p };
+                })}>نعم</Button>
+                <Button variant="outline" className="flex-1 lg:w-32 lg:flex-none" onClick={() => setForgot(true)}>نسيت</Button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex-1">
+              <p className="font-bold">الإذابة السريعة الآمنة</p>
+              <p className="mt-1">تُوضع الحصة في كيس محكم داخل ماء بارد، ويُغيَّر الماء كل 30 دقيقة، وتُطبخ فور ذوبانها. كيس مسطح 500 غ يذوب في نحو ساعة، و1–1.5 كغ في 2–3 ساعات. لا ماء ساخن ولا سطح المطبخ.</p>
+              {options.length > 0 && <button className="mt-2 font-bold text-ice underline" onClick={() => setSosOpen(true)}>أو وجبة سريعة الليلة بدلها</button>}
+            </div>
           )}
-        </aside>
+        </div>
+      )}
+
+      {/* ------------------------------------------------ today's prep: one column per moment, in time order */}
+      <section aria-labelledby="today-tasks">
+        <div className="mb-3 px-1">
+          <h3 id="today-tasks" className="text-[19px] font-extrabold">مهام اليوم</h3>
+          <p className="mt-0.5 text-[13.5px] leading-relaxed text-muted">دقائق قليلة في أوقات موجودة أصلًا في يومك، فلا يأخذ العشاء من وقتك أكثر من مدة طبخه.</p>
+        </div>
+        {sections.length > 0 ? (
+          <ol aria-label="مهام اليوم" className={`grid items-start gap-3 lg:gap-5 ${taskCols === 3 ? 'lg:grid-cols-3' : taskCols === 2 ? 'lg:grid-cols-2' : ''}`}>
+            {sections.map((sec, i) => {
+              const finished = i < current && sec.tasks.length > 0 && sec.tasks.every(done);
+              return finished ? (
+                <li key={sec.id}>
+                  <details className="rounded-[22px] border border-line bg-paper px-4">
+                    <summary className="flex min-h-12 cursor-pointer items-center gap-2 text-[14px] font-bold text-muted">
+                      <span className="grid size-6 place-items-center rounded-full bg-teal text-white"><Icon name="check" className="size-3.5" /></span>
+                      <span className="num text-copper">{fmtTime(sec.time)}</span> {sec.label}: تمت
+                    </summary>
+                    <div className="pb-4">{sec.node}</div>
+                  </details>
+                </li>
+              ) : (
+                <li key={sec.id} aria-current={i === current ? 'step' : undefined}
+                  className={`rounded-[22px] border bg-paper p-4 lg:p-5 ${i === current ? 'border-saffron shadow-[var(--shadow-card)] ring-2 ring-saffron/45' : 'border-line'} ${i < current ? 'opacity-80' : ''}`}>
+                  {sec.node}
+                </li>
+              );
+            })}
+          </ol>
+        ) : (
+          <p className="rounded-2xl border border-dashed border-line bg-paper px-4 py-5 text-center text-[14px] text-muted">لا مهام اليوم.</p>
+        )}
+      </section>
+
+      {/* ------------------------------------------------ the next days | what kind of dinner */}
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-9 lg:grid-cols-2 lg:gap-5">
+        {upcoming.length > 0 && (
+          <section aria-labelledby="next-days" className="flex flex-col">
+            <div className="mb-3 flex h-9 items-center justify-between px-1">
+              <h3 id="next-days" className="text-[19px] font-extrabold">خطتك للأيام القادمة</h3>
+              <button className="link text-[13.5px]" onClick={() => go('plan')}>الخطة كاملة</button>
+            </div>
+            <ul className="space-y-2">
+              {upcoming.map((x) => {
+                const r = RECIPE[x.rid];
+                return (
+                  <li key={x.night}>
+                    <button onClick={() => openRecipe(x.rid)} className="dish-card flex w-full items-center gap-3 overflow-hidden rounded-2xl border border-line bg-paper text-start">
+                      <RecipeImage recipe={r} className="h-[76px] w-[96px] shrink-0" plateSize={52} />
+                      <span className="min-w-0 flex-1 py-2">
+                        <span className="block text-[12.5px] font-bold text-copper">{dayName(x.date)}</span>
+                        <span className="block truncate text-[15px] font-bold">{r.title}</span>
+                        <span className="block text-[12.5px] text-muted"><span className="num">{r.total}</span> دقيقة</span>
+                      </span>
+                      <Icon name="down" className="me-3 size-4 rotate-90 text-muted" />
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            {nextShop && (
+              <button onClick={() => go('shop')} className="mt-2 flex w-full items-center gap-3 rounded-2xl bg-saffron-soft px-4 py-3 text-start">
+                <Glyph emoji="🛒" bg="#fff" size={40} />
+                <span className="flex-1">
+                  <span className="block text-[15px] font-bold">التسوق القادم {relDay(nextShop.date, today)}</span>
+                  <span className="block text-[13px] text-muted">لعشاءات {relRange(nextShop.firstNight, nextShop.lastNight)}</span>
+                </span>
+                <span className="num text-[15px] font-extrabold text-copper">{omr(nextShop.total)}</span>
+              </button>
+            )}
+          </section>
+        )}
+
+        <section aria-labelledby="time-left" className={`flex flex-col ${upcoming.length === 0 ? 'lg:col-span-2' : ''}`}>
+          <div className="mb-3 flex h-9 items-center px-1">
+            <h3 id="time-left" className="text-[19px] font-extrabold">كم من الوقت لديك؟</h3>
+          </div>
+          {/* phone: one scrolling row; desktop: a 2 × 4 grid that stretches to the plan column's height */}
+          <div className="scroll-x -mx-4 flex gap-2 px-4 lg:mx-0 lg:grid lg:flex-1 lg:grid-cols-2 lg:grid-rows-4 lg:px-0">
+            {MOODS.map((m) => (
+              <button key={m.id} onClick={() => browse(m.preset)}
+                className="flex min-h-12 shrink-0 items-center gap-3 rounded-2xl border border-line bg-paper px-3.5 py-2.5 text-start transition hover:border-teal">
+                <span className="emoji text-[22px]" aria-hidden="true">{m.emoji}</span>
+                <span className="min-w-0">
+                  <span className="block text-[14px] font-bold">{m.label}</span>
+                  <span className="hidden text-[12.5px] text-muted lg:block">{arCount(moodCount(m.preset), ['وصفة', 'وصفتان', 'وصفات', 'وصفة'])}</span>
+                </span>
+              </button>
+            ))}
+            <button onClick={() => browse()}
+              className="flex min-h-12 shrink-0 items-center gap-3 rounded-2xl border border-dashed border-line px-3.5 py-2.5 text-start text-teal transition hover:border-teal">
+              <Icon name="search" className="size-5" />
+              <span>
+                <span className="block text-[14px] font-bold">كل الوصفات</span>
+                <span className="hidden text-[12.5px] text-muted lg:block">بحث بالاسم أو المكوّن</span>
+              </span>
+            </button>
+          </div>
+        </section>
       </div>
 
       {/* ------------------------------------------------ worth trying */}
       {suggestions.length > 0 && (
-        <section>
+        <section aria-labelledby="worth-trying">
           <div className="mb-3 flex items-baseline justify-between px-1">
-            <h3 className="text-[19px] font-extrabold">وصفات تستحق التجربة</h3>
+            <h3 id="worth-trying" className="text-[19px] font-extrabold">وصفات تستحق التجربة</h3>
             <button className="link text-[13.5px]" onClick={() => browse()}>كل الوصفات</button>
           </div>
-          <p className="-mt-2 mb-3 px-1 text-[13px] text-muted">ليست في خطتك الحالية.</p>
           <ul className="scroll-x -mx-4 flex snap-x gap-3 px-4 sm:mx-0 sm:grid sm:grid-cols-4 sm:px-0 lg:gap-5">
-            {suggestions.map((r) => <li key={r.id} className="w-[46%] shrink-0 snap-start sm:w-auto"><RecipeCard r={r} state={state} store={store} open={() => openRecipe(r.id)} compact /></li>)}
+            {suggestions.map((r) => (
+              <li key={r.id} className="w-[46%] shrink-0 snap-start sm:w-auto">
+                <RecipeCard r={r} state={state} store={store} open={() => openRecipe(r.id)} compact />
+              </li>
+            ))}
           </ul>
         </section>
       )}
