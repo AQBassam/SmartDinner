@@ -117,7 +117,7 @@ export function TodayTab({ store, today, openRecipe, cook, go, browse }: Props) 
             : ahead > 0
               ? `${mins(minutesOf(day.evening))} مع تجهيز غداء الغد، توفّر ${mins(ahead)} وقت العشاء غدًا`
               : `${mins(minutesOf(day.evening))} مع تجهيز غداء الغد`}
-          action={<button className="text-[13px] font-bold text-teal underline" onClick={() => openRecipe(tomorrowR.id)}>الوصفة</button>}>
+          action={<button className="link text-[13.5px]" onClick={() => openRecipe(tomorrowR.id)}>الوصفة</button>}>
           <TaskList tasks={day.evening} done={done} toggle={toggle} />
         </Group>
       ),
@@ -192,7 +192,7 @@ export function TodayTab({ store, today, openRecipe, cook, go, browse }: Props) 
                       <p className="mt-3 text-[14px] font-medium">{cookLine(now, tonight.start, state.times.dinner, state.times.prep)}</p>
                       <p className="mt-1 text-[13px] text-muted">
                         {missing > 0
-                          ? <>ينقص {arCount(missing, ['مكوّن', 'مكوّنان', 'مكوّنات', 'مكوّنًا'])} في <button className="font-bold text-teal underline" onClick={() => go('shop')}>قائمة التسوق</button>.</>
+                          ? <>ينقص {arCount(missing, ['مكوّن', 'مكوّنان', 'مكوّنات', 'مكوّنًا'])} في <button className="link-inline" onClick={() => go('shop')}>قائمة التسوق</button>.</>
                           : 'مكوناتها كلها في البيت حسب قائمة التسوق.'}
                       </p>
                       <div className="mt-auto flex flex-wrap gap-2 pt-4">
@@ -280,7 +280,7 @@ export function TodayTab({ store, today, openRecipe, cook, go, browse }: Props) 
             <section>
               <div className="mb-2 flex items-baseline justify-between px-1">
                 <h3 className="text-[19px] font-extrabold">خطتك للأيام القادمة</h3>
-                <button className="text-[13.5px] font-bold text-teal underline" onClick={() => go('plan')}>الخطة كاملة</button>
+                <button className="link text-[13.5px]" onClick={() => go('plan')}>الخطة كاملة</button>
               </div>
               <ul className="space-y-2">
                 {upcoming.map((x) => {
@@ -333,7 +333,7 @@ export function TodayTab({ store, today, openRecipe, cook, go, browse }: Props) 
         <section>
           <div className="mb-3 flex items-baseline justify-between px-1">
             <h3 className="text-[19px] font-extrabold">وصفات تستحق التجربة</h3>
-            <button className="text-[13.5px] font-bold text-teal underline" onClick={() => browse()}>كل الوصفات</button>
+            <button className="link text-[13.5px]" onClick={() => browse()}>كل الوصفات</button>
           </div>
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-5">
             {suggestions.map((r) => <li key={r.id}><RecipeCard r={r} state={state} store={store} open={() => openRecipe(r.id)} compact /></li>)}
@@ -342,7 +342,7 @@ export function TodayTab({ store, today, openRecipe, cook, go, browse }: Props) 
       )}
 
       <p className="px-1 text-center text-[13px] text-muted">
-        إرشادات التجهيز المسبق وسلامة الغذاء والحفظ في <button className="font-bold text-teal underline" onClick={() => go('more')}>المزيد</button>.
+        إرشادات التجهيز المسبق وسلامة الغذاء والحفظ في <button className="link-inline" onClick={() => go('more')}>المزيد</button>.
       </p>
 
       <Sheet open={sosOpen} onClose={() => setSosOpen(false)} title="وجبة سريعة الليلة">

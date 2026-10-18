@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ALLERGENS, ING, RECIPE, recipeAllergens, TAGS, type Recipe } from '../lib/data';
 import { scaledQty } from '../lib/engine';
-import { diffDays, fmtDateShort, fmtQty, num, todayISO } from '../lib/format';
+import { arCount, diffDays, fmtDateShort, fmtQty, num, PERSON, PORTION, todayISO } from '../lib/format';
 import { members, servings } from '../lib/state';
 import type { Store } from '../store';
 import { hasConflict, recipeConflicts } from './shared';
@@ -89,7 +89,7 @@ export function RecipeSheet({ store, recipeId, kitchenFirst = false, onClose }: 
         )}
 
         <h4 className="mt-6 mb-2 flex items-baseline justify-between text-[16px] font-extrabold">
-          المقادير <span className="text-[13px] font-medium text-muted"><span className="num">{members(state)}</span> أفراد · <span className="num">{num(sv, 2)}</span> حصة</span>
+          المقادير <span className="text-[13px] font-medium text-muted"><span className="num">{arCount(members(state), PERSON)}</span> · <span className="num">{arCount(sv, PORTION)}</span></span>
         </h4>
         <ul className="divide-y divide-line rounded-2xl border border-line bg-paper">
           {rows.map(({ ing, opt, off, note, text }) => (
@@ -282,7 +282,7 @@ function KitchenMode({ recipe, sv, optionalOff, onClose }: { recipe: Recipe; sv:
       <div className="flex-1 overflow-y-auto px-5 py-6">
         {i < 0 ? (
           <>
-            <h2 className="mb-4 text-[22px] font-extrabold">المقادير (<span className="num">{num(sv, 2)}</span> حصة)</h2>
+            <h2 className="mb-4 text-[22px] font-extrabold">المقادير لـ<span className="num">{arCount(sv, PORTION)}</span></h2>
             <ul className="space-y-2 text-[20px] leading-snug">
               {rows.map(({ ing, text, opt }) => (
                 <li key={ing.id} className="flex justify-between gap-3 border-b border-white/10 pb-2">

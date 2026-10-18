@@ -147,7 +147,7 @@ export function ShopTab({ store, today, go }: { store: Store; today: string; go:
                   onToggle={(v) => toggle(l.key, v)} onExpand={() => setOpen(open === l.key ? null : l.key)}
                   onHave={(v) => setHave(l.ing.id, v)} stock={state.stock[l.ing.id] ?? 0}
                   onStock={(v) => set((s) => { const stock = { ...s.stock }; if (v > 0) stock[l.ing.id] = v; else delete stock[l.ing.id]; return { stock }; })}
-                  recipeTitle={(n) => RECIPE[state.nights[n - 1]]?.title ?? ''} />
+                  recipeTitle={(n) => RECIPE[state.nights[n - 1]]?.title ?? ''} nightDate={(n) => gen.nightDates[n - 1]} today={today} />
               ))}
             </Card>
           </div>
@@ -195,9 +195,9 @@ export function ShopTab({ store, today, go }: { store: Store; today: string; go:
   );
 }
 
-function ShopRow({ l, checked, expanded, stock, onToggle, onExpand, onHave, onStock, recipeTitle }: {
+function ShopRow({ l, checked, expanded, stock, onToggle, onExpand, onHave, onStock, recipeTitle, nightDate, today }: {
   l: PurchaseLine; checked: boolean; expanded: boolean; stock: number; onToggle: (v: boolean) => void; onExpand: () => void;
-  onHave: (v: boolean) => void; onStock: (v: number) => void; recipeTitle: (night: number) => string;
+  onHave: (v: boolean) => void; onStock: (v: number) => void; recipeTitle: (night: number) => string; nightDate: (night: number) => string; today: string;
 }) {
   const math = costLine(l);
   const covered = !l.have && !needsBuying(l);
@@ -231,7 +231,7 @@ function ShopRow({ l, checked, expanded, stock, onToggle, onExpand, onHave, onSt
             <ul className="mt-1 space-y-0.5">
               {l.portions.map((p, i) => (
                 <li key={i} className="flex justify-between gap-2">
-                  <span>الليلة <span className="num">{p.night}</span> · {recipeTitle(p.night)}</span>
+                  <span><b className="font-bold">{relDay(nightDate(p.night), today)}</b>: {recipeTitle(p.night)}</span>
                   <span className="num shrink-0">{needLabel(l.ing, p.qty)}</span>
                 </li>
               ))}

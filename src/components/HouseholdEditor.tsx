@@ -1,4 +1,4 @@
-import { num } from '../lib/format';
+import { arCount, num, PERSON, PORTION } from '../lib/format';
 import { AGE_WEIGHTS, APPETITES, members, servings, type AppState } from '../lib/state';
 import type { Store } from '../store';
 import { IconButton } from './ui';
@@ -22,7 +22,7 @@ export function HouseholdEditor({ store }: { store: Store }) {
       <div className="flex items-baseline justify-between">
         <p className="text-[13px] font-bold text-muted">أفراد الأسرة</p>
         <p className="text-[12.5px] text-muted">
-          <span className="num font-bold text-ink">{total}</span> أفراد = <span className="num font-bold text-teal">{num(sv, 2)}</span> حصة
+          <span className="num font-bold text-ink">{arCount(total, PERSON)}</span> = <span className="num font-bold text-teal">{arCount(Math.round(sv * 100) / 100, PORTION)}</span>
         </p>
       </div>
       <div className="mt-2 grid grid-cols-3 gap-2">

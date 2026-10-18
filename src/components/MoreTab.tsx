@@ -108,8 +108,8 @@ export function MoreTab({ store, go }: { store: Store; go: (t: TabId) => void })
           'الرائحة وحدها ليست حكمًا على سلامة الطعام.',
         ]} />
         <p className="mt-3 text-[13px] text-muted">
-          المرجع: وكالة معايير الغذاء البريطانية (<a className="text-teal underline" href="https://www.food.gov.uk/safety-hygiene/chilling" target="_blank" rel="noopener noreferrer">التبريد</a> ·{' '}
-          <a className="text-teal underline" href="https://www.food.gov.uk/safety-hygiene/cooking-your-food" target="_blank" rel="noopener noreferrer">الطهي الآمن</a>). تُتبع الإرشادات المحلية وتعليمات العبوة دائمًا.
+          المرجع: وكالة معايير الغذاء البريطانية (<a className="link-inline" href="https://www.food.gov.uk/safety-hygiene/chilling" target="_blank" rel="noopener noreferrer">التبريد</a> ·{' '}
+          <a className="link-inline" href="https://www.food.gov.uk/safety-hygiene/cooking-your-food" target="_blank" rel="noopener noreferrer">الطهي الآمن</a>). تُتبع الإرشادات المحلية وتعليمات العبوة دائمًا.
         </p>
       </Section>
 

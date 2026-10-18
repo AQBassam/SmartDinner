@@ -12,6 +12,9 @@ export function omr(n: number): string {
 }
 
 /** Arabic counted noun. forms = [مفرد, مثنى, جمع 3-10, تمييز 11+] */
+export const PORTION = ['حصة', 'حصتان', 'حصص', 'حصة'] as const;
+export const PERSON = ['فرد', 'فردان', 'أفراد', 'فردًا'] as const;
+
 export function arCount(n: number, forms: readonly [string, string, string, string]): string {
   const [one, two, few, many] = forms;
   if (n === 0.5) return `نصف ${one}`;

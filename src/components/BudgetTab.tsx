@@ -2,7 +2,7 @@ import { BarController, BarElement, CategoryScale, Chart, LinearScale, Tooltip }
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { CATEGORY_ORDER, INGREDIENTS, ING, type Ingredient, type SoldT, type StoreId } from '../lib/data';
 import { commonBasket, compareStores, needsBuying } from '../lib/engine';
-import { arCount, num, omr, todayISO } from '../lib/format';
+import { arCount, num, omr, PERSON, todayISO } from '../lib/format';
 import { isExpired, isStale, resolvePrice, unitCost, type PriceRecord, type PriceSource, type StoreMode } from '../lib/prices';
 import { members, newId, PriceRecordSchema, soldFits } from '../lib/state';
 import type { Store } from '../store';
@@ -61,7 +61,7 @@ export function BudgetTab({ store }: { store: Store }) {
         <Kpi label="مبلغ الشراء" value={omr(b.purchase)} hint="ما يُدفع عند الصندوق" tone="copper" />
         <Kpi label="تكلفة الاستهلاك" value={omr(b.consumption)} hint="ما تأكله الخطة فعلًا" tone="teal" />
         <Kpi label="لكل عشاء" value={omr(b.perDinner)} hint={`الاستهلاك ÷ ${N} ليلة`} />
-        <Kpi label="لكل فرد في العشاء" value={omr(b.perPersonDinner)} hint={`÷ ${members(state)} أفراد`} />
+        <Kpi label="لكل فرد في العشاء" value={omr(b.perPersonDinner)} hint={`÷ ${arCount(members(state), PERSON)}`} />
       </div>
 
       <div>
@@ -98,7 +98,7 @@ export function BudgetTab({ store }: { store: Store }) {
                 : (
                   <div className="text-end">
                     <span className="num block text-[16px] font-extrabold">{omr(c.ownTotal)}</span>
-                    <button className="text-[12px] font-bold text-teal underline" onClick={() => setQuickStore(c.store)}>إضافة أسعار</button>
+                    <button className="link text-[12.5px]" onClick={() => setQuickStore(c.store)}>إضافة أسعار</button>
                   </div>
                 )}
             </div>
@@ -311,7 +311,7 @@ function PriceSheet({ ing, store, onClose }: { ing: Ingredient | null; store: St
                   <div className="mt-1 flex gap-1.5">
                     {expired && <Badge tone="muted">عرض منتهٍ</Badge>}
                     {stale && <Badge tone="warn">أقدم من 30 يومًا</Badge>}
-                    {r.url && <a href={r.url} target="_blank" rel="noopener noreferrer" className="text-[12px] text-teal underline">المصدر</a>}
+                    {r.url && <a href={r.url} target="_blank" rel="noopener noreferrer" className="link text-[12.5px]">المصدر</a>}
                   </div>
                 </div>
                 <IconButton icon="x" label="حذف السعر" onClick={() => set((s) => ({ priceBook: s.priceBook.filter((x) => x.id !== r.id) }))} />

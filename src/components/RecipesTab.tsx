@@ -70,7 +70,7 @@ export function RecipesTab({ store, openRecipe, preset }: { store: Store; openRe
       {list.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-line bg-paper px-4 py-8 text-center">
           <p className="text-[15px] font-bold">لا وصفة تطابق هذا الاختيار</p>
-          <button className="mt-2 text-[14px] font-bold text-teal underline" onClick={() => { clear(); setQ(''); }}>عرض كل الوصفات</button>
+          <button className="link mt-2 text-[14px]" onClick={() => { clear(); setQ(''); }}>عرض كل الوصفات</button>
         </div>
       ) : (
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 lg:gap-5">

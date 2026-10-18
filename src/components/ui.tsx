@@ -126,8 +126,10 @@ export function SectionTitle({ title, hint, action }: { title: string; hint?: Re
 export function Checkbox({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
     <button role="checkbox" aria-checked={checked} aria-label={label} onClick={(e) => { e.stopPropagation(); onChange(!checked); }}
-      className={`grid size-7 shrink-0 place-items-center rounded-lg border-2 transition ${checked ? 'border-teal bg-teal text-white' : 'border-[#c9bfae] bg-paper text-transparent'}`}>
-      <Icon name="check" className="size-4" />
+      className="-m-1 grid size-9 shrink-0 place-items-center rounded-xl">
+      <span className={`grid size-7 place-items-center rounded-lg border-2 transition ${checked ? 'border-teal bg-teal text-white' : 'border-[#c9bfae] bg-paper text-transparent'}`}>
+        <Icon name="check" className="size-4" />
+      </span>
     </button>
   );
 }

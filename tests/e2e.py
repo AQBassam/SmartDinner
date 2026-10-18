@@ -70,7 +70,7 @@ try:
         expect(page.locator('header')).to_contain_text('6')
         ok('age-group stepper updates header', '6.2' in page.inner_text('main'))
         page.get_by_role('radio', name='كبيرة').click()
-        ok('appetite changes servings', '7.13' in page.inner_text('main'))
+        ok('appetite changes servings', '7.1 حصة' in page.inner_text('main'))
 
         # swap night 1
         page.get_by_role('button', exact=True, name='تبديل وجبة الليلة 1').click()

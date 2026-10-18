@@ -48,6 +48,11 @@ body {
 button { cursor: pointer; }
 :focus-visible { outline: 3px solid var(--color-teal-bright); outline-offset: 2px; border-radius: 10px; }
 input[type='date'] { min-height: 44px; }
+/* Component classes live in a layer so Tailwind utilities on the same element (w-24, mx-auto...) win. */
+@layer components {
+.link { display: inline-flex; align-items: center; min-height: 36px; font-weight: 700; color: var(--color-teal); text-decoration: underline; text-underline-offset: 3px; }
+/* Link inside a sentence: same line box, but a taller touch area through vertical padding. */
+.link-inline { font-weight: 700; color: var(--color-teal); text-decoration: underline; text-underline-offset: 3px; padding-block: 12px; }
 .input { display: block; width: 100%; min-height: 44px; border: 1px solid var(--color-line); background: var(--color-paper); border-radius: 12px; padding: 0 10px; font-size: 15px; color: var(--color-ink); }
 /* A top-view plate: tinted food area, white rim, soft shadow; the dish glyph sits in the middle. */
 .plate {
@@ -57,6 +62,7 @@ input[type='date'] { min-height: 44px; }
   box-shadow: 0 8px 18px -10px rgb(42 27 45 / .45), inset 0 0 0 1px rgb(42 27 45 / .06);
 }
 .emoji { font-family: var(--font-emoji); line-height: 1; }
+}
 .dish-fallback {
   background:
     radial-gradient(circle at 50% 55%, rgb(255 255 255 / .55), transparent 62%),
@@ -74,7 +80,9 @@ input[type='date'] { min-height: 44px; }
   background-image: radial-gradient(rgb(255 255 255 / .22) 1.2px, transparent 1.3px);
   background-size: 14px 14px;
 }
-.num { font-variant-numeric: tabular-nums; direction: ltr; unicode-bidi: isolate; }
+/* Numbers keep their own order; a value with an Arabic unit ("25 د", "56.919 ر.ع") reads right-to-left,
+   a bare range or fraction ("1–5", "0/35") stays left-to-right. */
+.num { font-variant-numeric: tabular-nums; unicode-bidi: plaintext; }
 .safe-bottom { padding-bottom: calc(env(safe-area-inset-bottom) + 76px); }
 @media (min-width: 64rem) { .safe-bottom { padding-bottom: 64px; } }
 .nav-safe { padding-bottom: env(safe-area-inset-bottom); }

@@ -22,7 +22,7 @@
 ## التثبيت على الخادم
 
 ```bash
-V=3.3.0
+V=3.4.1
 cd /root
 curl -fLO https://github.com/AQBassam/SmartDinner/releases/download/v$V/dinner-release-$V.tar.gz
 curl -fLO https://github.com/AQBassam/SmartDinner/releases/download/v$V/dinner-release-$V.tar.gz.sha256

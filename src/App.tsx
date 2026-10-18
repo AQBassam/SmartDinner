@@ -86,7 +86,7 @@ export default function App() {
             })}
           </nav>
           <button onClick={() => go('plan')} aria-label={`${members(store.state)} أفراد على العشاء، تعديل العدد`}
-            className="flex shrink-0 items-center gap-1.5 rounded-full border border-line bg-paper px-3 py-1.5 text-[14px] font-bold">
+            className="flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border border-line bg-paper px-3 text-[14px] font-bold">
             <Icon name="users" className="size-[18px] text-teal" />
             <span className="num">{members(store.state)}</span>
           </button>
