@@ -338,6 +338,7 @@ export interface StoreComparison {
   lines: number;
   ownCost: Record<string, number>; // ingredient id → purchase cost, own-priced lines only
   ownTotal: number;
+  lastChecked?: string; // newest price date among own-priced lines
 }
 
 /**
@@ -356,6 +357,7 @@ export function compareStores(plan: PlanInput): StoreComparison[] {
     return {
       store, total: g.budget.purchase, ownPriced: own.length, lines: buy.length,
       ownCost, ownTotal: own.reduce((sum, l) => sum + l.cost, 0),
+      lastChecked: own.map((l) => l.price.date).filter((d): d is string => !!d).sort().at(-1),
     };
   });
 }

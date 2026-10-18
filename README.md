@@ -2,24 +2,27 @@
 
 [![CI](https://github.com/AQBassam/SmartDinner/actions/workflows/ci.yml/badge.svg)](https://github.com/AQBassam/SmartDinner/actions/workflows/ci.yml)
 
-يعمل على **https://dinner.bassamailab.xyz** · النشر: [`deploy/DEPLOY.md`](deploy/DEPLOY.md) · ملف التسليم: [`HANDOVER.md`](HANDOVER.md)
+يعمل على **https://dinner.bassamailab.xyz** · الإصدارات: [`CHANGELOG.md`](CHANGELOG.md) · النشر: [`deploy/DEPLOY.md`](deploy/DEPLOY.md) · ملف التسليم: [`HANDOVER.md`](HANDOVER.md)
+
+نتائج الاختبارات لكل إصدار في صفحة [Releases](https://github.com/AQBassam/SmartDinner/releases)، ويكتبها CI آليًا.
 
 المخرج العملي لسؤال «وش نسوي عشا الليلة؟»: تبويب **اليوم** يحسم وجبة الليلة بعد الغداء، ويحسب موعد بدء الطهي من موعد العشاء، ويوزع التجهيز المسبق على لحظات موجودة أصلًا في يوم الأسرة (يوم التسوق، ومساء تجهيز غداء الغد، وبعد الغداء).
 
-تطبيق ويب (PWA) ثابت بلا خادم: خطة عشاء من 18 وصفة (R01–R15 من النسخة الثانية + R16–R18)، قائمة تسوق **تتولد من الوصفات**، فئات عمرية وشهية، حساسية ومكونات مستبعدة، مخزون جزئي، أسعار لولو ونستو وهايبرماكس مع مقارنة، وتذكيرات لتقويم الهاتف: التسوق، وعشاء الليلة 4:15، ومهام الليلة 9:30.
+تطبيق ويب (PWA) ثابت بلا خادم: خطة عشاء من 18 وصفة (R01–R15 من النسخة الثانية + R16–R18)، قائمة تسوق **تتولد من الوصفات**، فئات عمرية وشهية، حساسية ومكونات مستبعدة، مخزون جزئي، أسعار لولو الموثقة من موقعه الرسمي، مع سجل أسعار لنستو وهايبرماكس يملؤه المستخدم ومقارنة لا تظهر إلا على أصناف مسعّرة في متجرين، وتذكيرات لتقويم الهاتف: التسوق، وعشاء الليلة 4:15، ومهام الليلة 9:30.
 
 ## التشغيل
 
 ```bash
 npm ci
-npm test                 # 50 اختبار وحدة: البيانات، المولّد، الجدول اليومي، الطوارئ، الأسعار، الترحيل، التصدير
+npm test                 # اختبارات الوحدة: البيانات، المولّد، الجدول اليومي، الطوارئ، الأسعار، الترحيل، التصدير
 npm run dev              # تطوير محلي
 npm run build            # dist/  → النشر على dinner.bassamailab.xyz
 npm run build:preview    # dist-preview/index.html → ملف واحد للمعاينة (دون Service Worker)
 npm run release          # اختبار + بناء + release/dinner-release-<version>.tar.gz مع SHA256SUMS وسكربتات النشر
 npx tsx scripts/report.ts 5          # تقرير تدقيق: كل الدفعات والكميات والتكلفة لخمسة أفراد
 python3 scripts/images.py photos/    # صور الوصفات: photos/<id>.jpg + credits.json ← public/recipes/*.webp + src/data/images.json (انظر docs/Recipe_Photo_Brief.md)
-python3 tests/e2e.py dist shots/     # 32 اختبار متصفح تحت سياسة CSP الإنتاجية (بساعة مثبتة)
+python3 tests/e2e.py dist shots/     # اختبارات المتصفح تحت سياسة CSP الإنتاجية (بساعة مثبتة)
+python3 tests/ui_audit.py dist shots/audit   # تدقيق التخطيط: نص مغطّى أو مقصوص، تمرير أفقي، مساحات لمس، بعرضي 360 و1280
 ```
 
 ## البنية

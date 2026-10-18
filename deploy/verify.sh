@@ -35,8 +35,9 @@ d=$(hdr /.previous); has "$d" '^HTTP/[0-9.]* 40[34]' && ok "الملفات ال�
 
 v=$(curl -sS --max-time 15 "${H[@]}" "$BASE/version.json")
 got=$(sed -n 's/.*"contentHash": *"\([^"]*\)".*/\1/p' <<<"$v")
-if [ -n "$EXPECT" ]; then [ "$got" = "$EXPECT" ] && ok "الإصدار المنشور يطابق الحزمة ($got)" || bad "مطابقة الإصدار" "المنشور: ${got:-لا شيء} / المتوقع: $EXPECT"
-else [ -n "$got" ] && ok "version.json: $got" || bad "version.json" "غير موجود"; fi
+ver=$(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' <<<"$v")
+if [ -n "$EXPECT" ]; then [ "$got" = "$EXPECT" ] && ok "الإصدار المنشور ${ver:-؟} يطابق الحزمة ($got)" || bad "مطابقة الإصدار" "المنشور: ${got:-لا شيء} / المتوقع: $EXPECT"
+else [ -n "$got" ] && ok "version.json: ${ver:-؟} ($got)" || bad "version.json" "غير موجود"; fi
 
 if [[ "$BASE" == https://* ]]; then
   r=$(curl -sS -o /dev/null -w '%{http_code} %{redirect_url}' --max-time 15 "http://${BASE#https://}/")

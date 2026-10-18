@@ -2,7 +2,7 @@ import { BarController, BarElement, CategoryScale, Chart, LinearScale, Tooltip }
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { CATEGORY_ORDER, INGREDIENTS, ING, type Ingredient, type SoldT, type StoreId } from '../lib/data';
 import { commonBasket, compareStores, needsBuying } from '../lib/engine';
-import { arCount, num, omr, PERSON, todayISO } from '../lib/format';
+import { arCount, fmtDateShort, num, omr, PERSON, todayISO } from '../lib/format';
 import { isExpired, isStale, resolvePrice, unitCost, type PriceRecord, type PriceSource, type StoreMode } from '../lib/prices';
 import { members, newId, PriceRecordSchema, soldFits } from '../lib/state';
 import type { Store } from '../store';
@@ -76,6 +76,12 @@ export function BudgetTab({ store }: { store: Store }) {
         </div>
         {(() => {
           const sel = cmp.find((c) => c.store === state.storeMode);
+          const pricedStores = cmp.filter((c) => c.store !== 'cheapest' && c.ownPriced > 0);
+          if (state.storeMode === 'cheapest' && pricedStores.length < 2) return (
+            <p className="mt-3 rounded-xl bg-warn-soft px-3 py-2 text-[13px] leading-relaxed text-warn">
+              «الأرخص» يختار بين المتاجر صنفًا صنفًا، والأسعار المسجلة الآن من {pricedStores.length ? STORE_LABEL[pricedStores[0].store as StoreId] : 'أي متجر'} فقط؛ فالنتيجة هي أسعاره، لا أرخص سعر في السوق.
+            </p>
+          );
           return sel && sel.store !== 'cheapest' && sel.ownPriced === 0 && (
             <p className="mt-3 rounded-xl bg-warn-soft px-3 py-2 text-[13px] leading-relaxed text-warn">
               لا توجد أسعار مسجلة من {STORE_LABEL[sel.store]}؛ القائمة والميزانية الآن بالأسعار الافتراضية، لا بأسعاره.
@@ -90,7 +96,7 @@ export function BudgetTab({ store }: { store: Store }) {
                 <p className="text-[12.5px] text-muted">
                   {c.ownPriced === 0
                     ? 'لا توجد أسعار مسجلة لهذا المتجر بعد'
-                    : <>أسعار المتجر نفسه لـ<span className="num">{c.ownPriced}</span> من <span className="num">{c.lines}</span> بندًا في الخطة</>}
+                    : <>مسعّر <span className="num">{c.ownPriced}</span> من <span className="num">{c.lines}</span> بندًا في الخطة{c.lastChecked && <> · آخر تحديث {fmtDateShort(c.lastChecked)}</>}</>}
                 </p>
               </div>
               {c.ownPriced === 0
@@ -98,6 +104,7 @@ export function BudgetTab({ store }: { store: Store }) {
                 : (
                   <div className="text-end">
                     <span className="num block text-[16px] font-extrabold">{omr(c.ownTotal)}</span>
+                    <span className="block text-[11.5px] text-muted">{c.ownPriced < c.lines ? 'للأصناف المسعّرة فقط' : 'للخطة كاملة'}</span>
                     <button className="link text-[12.5px]" onClick={() => setQuickStore(c.store)}>إضافة أسعار</button>
                   </div>
                 )}
@@ -120,7 +127,8 @@ export function BudgetTab({ store }: { store: Store }) {
             </>
           ) : (
             <p className="text-muted">
-              المقارنة بين المتاجر تحتاج أسعارًا من متجرين على الأقل للأصناف نفسها. أسعار لولو الحالية من موقعه الرسمي؛ أسعار نستو وهايبرماكس تُنشر في نشرات عروض مصورة، فتُسجَّل من النشرة أو من الرف عبر «تسجيل أسعار». المجموع لا يُعرض لمتجر بلا أسعار حتى لا تظهر أرقام متطابقة غير حقيقية.
+              <b className="block text-ink">لا توجد بيانات أسعار كافية للمقارنة حتى الآن.</b>
+              {basket ? 'المتاجر التي سُجلت أسعارها لا تشترك في أي صنف من أصناف الخطة. ' : ''}المقارنة تحتاج أسعارًا من متجرين على الأقل للأصناف نفسها. أسعار لولو الحالية من موقعه الرسمي؛ أسعار نستو وهايبرماكس تُنشر في نشرات عروض مصورة، فتُسجَّل من النشرة أو من الرف عبر «تسجيل أسعار». المجموع لا يُعرض لمتجر بلا أسعار حتى لا تظهر أرقام متطابقة غير حقيقية.
             </p>
           )}
         </div>

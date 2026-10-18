@@ -19,7 +19,7 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Unit tests (data, engine, schedule, prices, migration, exports)
-        run: npm test
+        run: npx vitest run --reporter=default --reporter=json --outputFile=test-results/unit.json
       - name: Production build
         run: npm run build
       - uses: actions/setup-python@v5
@@ -29,13 +29,25 @@ jobs:
         run: |
           pip install playwright==1.56.0
           python -m playwright install --with-deps chromium
-          python tests/e2e.py dist shots
+          python tests/e2e.py dist shots | tee test-results/e2e.txt
+        shell: bash
+      - name: Layout audit (covered text, clipping, sideways scroll, tap targets)
+        run: python tests/ui_audit.py dist shots/audit | tee test-results/audit.txt
+        shell: bash
+      - name: Test summary
+        if: always()
+        run: node scripts/test-summary.mjs | tee -a "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: screenshots
           path: shots/
           retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-summary
+          path: test-results/summary.md
 
   release:
     # When package.json carries a version that has no release yet, a push to main builds the
@@ -60,6 +72,14 @@ jobs:
           cache: npm
       - if: steps.v.outputs.new == 'true'
         run: npm ci && npm run build && bash scripts/release.sh
+      - uses: actions/download-artifact@v4
+        if: steps.v.outputs.new == 'true'
+        with:
+          name: test-summary
+          path: test-results
+      - name: Release notes from CHANGELOG.md and the test summary
+        if: steps.v.outputs.new == 'true'
+        run: bash scripts/release-notes.sh "${{ steps.v.outputs.version }}" > release-notes.md && cat release-notes.md
       - uses: softprops/action-gh-release@v2
         if: steps.v.outputs.new == 'true'
         with:
@@ -69,4 +89,4 @@ jobs:
           files: |
             release/dinner-release-*.tar.gz
             release/dinner-release-*.tar.gz.sha256
-          generate_release_notes: true
+          body_path: release-notes.md

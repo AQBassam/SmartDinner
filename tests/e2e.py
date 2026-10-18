@@ -148,7 +148,7 @@ try:
         page.keyboard.press('Escape')
         page.get_by_role('radio', name='نستو').click(); page.wait_for_timeout(200)
         main = page.inner_text('main')
-        ok('store comparison: nesto own price counted, fair basket shown', 'لـ1 من' in main and 'مقارنة عادلة على 1 من' in main)
+        ok('store comparison: nesto own price counted, fair basket shown', 'مسعّر 1 من' in main and 'للأصناف المسعّرة فقط' in main and 'مقارنة عادلة على 1 من' in main)
         ok('hypermax without prices shows no fake total', 'لا توجد أسعار مسجلة لهذا المتجر بعد' in main)
         page.get_by_role('button', exact=True, name='تسجيل أسعار').first.click()
         qd = page.get_by_role('dialog')

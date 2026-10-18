@@ -353,6 +353,7 @@ describe('store comparison never shows fallback totals as real', () => {
     const by = Object.fromEntries(cmp.map((c) => [c.store, c]));
     expect([by.nesto.ownPriced, by.hypermax.ownPriced, by.nesto.ownTotal]).toEqual([0, 0, 0]);
     expect(by.lulu.ownPriced).toBeGreaterThan(20);
+    expect([by.lulu.lastChecked, by.nesto.lastChecked]).toEqual(['2026-10-18', undefined]);
     expect(commonBasket(cmp)).toBeNull();
   });
   it('like-for-like basket: only items priced in both stores, same quantities', () => {
