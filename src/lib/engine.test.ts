@@ -8,6 +8,7 @@ import { applyEmergency, buildSchedule, emergencyOptions, minutesOf, scheduleEve
 import { migrateHtmlV2 } from './migrate';
 import { resolvePrice, type PriceRecord } from './prices';
 import { buyLabel, shoppingCsv } from './purchase';
+import { detectPlatform } from './install';
 import { DEFAULT_TIMES, defaultState, exportBackup, importBackup, loadState, servings, STORAGE_KEY } from './state';
 
 const TODAY = '2026-10-18';
@@ -384,5 +385,15 @@ describe('recipe photos', () => {
     const { PHOTOS, photoUrl } = await import('./data');
     for (const r of RECIPES) expect(r.photoAlt.length).toBeGreaterThan(15);
     for (const r of RECIPES) if (!PHOTOS[r.id]) expect(photoUrl(r.id, 'card')).toBeNull();
+  });
+});
+
+describe('install as an app', () => {
+  it('tells iPhone, iPad (reported as a Mac), Android and desktop apart', () => {
+    expect(detectPlatform('Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) Safari/604.1', 5)).toBe('ios');
+    expect(detectPlatform('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari/605.1.15', 5)).toBe('ios');
+    expect(detectPlatform('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari/605.1.15', 0)).toBe('desktop');
+    expect(detectPlatform('Mozilla/5.0 (Linux; Android 15; Pixel 8) Chrome/141.0 Mobile Safari/537.36', 5)).toBe('android');
+    expect(detectPlatform('Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/141.0 Safari/537.36', 0)).toBe('desktop');
   });
 });

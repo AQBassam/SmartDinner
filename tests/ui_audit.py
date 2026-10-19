@@ -46,6 +46,7 @@ PROBE = r"""
 }
 """
 
+ANDROID = 'Mozilla/5.0 (Linux; Android 15; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36'
 findings, errors = {}, []
 def audit(page, name, scope=None):
     page.wait_for_timeout(250)
@@ -63,7 +64,8 @@ try:
         b = p.chromium.launch()
         for width in (360, 1280):
             ctx = b.new_context(viewport={'width': width, 'height': 860}, locale='ar-OM', timezone_id='Asia/Muscat',
-                                is_mobile=width < 800, has_touch=width < 800)
+                                is_mobile=width < 800, has_touch=width < 800,
+                                user_agent=ANDROID if width < 800 else None)
             page = ctx.new_page()
             page.on('console', lambda m: m.type == 'error' and errors.append(m.text))
             page.on('pageerror', lambda e: errors.append(str(e)))
@@ -73,6 +75,10 @@ try:
                 audit(page, f'{width}-intro-{step}', '[role=dialog]')
                 page.get_by_role('button', exact=True, name='التالي').click()
             audit(page, f'{width}-intro-family', '[role=dialog]')
+            if width < 800:  # phones get one more step: installing the guide as an app
+                page.get_by_role('button', exact=True, name='التالي').click()
+                page.get_by_role('button', name='عرض الخطوات على آيفون').click()
+                audit(page, f'{width}-intro-install', '[role=dialog]')
             page.get_by_role('button', exact=True, name='ابدأ').click()
             # make "today" a dinner night so every block exists
             st = json.loads(page.evaluate("localStorage.getItem('sdg.state.v3')")); st['startDate'] = '2026-10-20'

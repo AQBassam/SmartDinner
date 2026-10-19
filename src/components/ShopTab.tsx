@@ -214,8 +214,8 @@ function ShopRow({ l, checked, expanded, stock, onToggle, onExpand, onHave, onSt
           <div className="mt-1 flex flex-wrap gap-1">
             {l.fromStock > 0 && !l.have && !covered && <Badge tone="ok" icon="home">من المنزل {needLabel(l.ing, l.fromStock)}</Badge>}
             {l.frozenProduct && <Badge tone="ice" icon="snow">يُحفظ مجمدًا</Badge>}
-            {l.freezeNights.length > 0 && <Badge tone="ice" icon="snow">جمّد حصة الليالي <span className="num">{l.freezeNights.join('، ')}</span></Badge>}
-            {l.tightNights.length > 0 && <Badge tone="warn" icon="alert">قد يذبل قبل الليلة <span className="num">{l.tightNights.join('، ')}</span></Badge>}
+            {l.freezeNights.length > 0 && <Badge tone="ice" icon="snow">جمّد حصة الليالي {l.freezeNights.map((n, i) => <span key={n}>{i ? '، ' : ''}<span className="num">{n}</span></span>)}</Badge>}
+            {l.tightNights.length > 0 && <Badge tone="warn" icon="alert">قد يذبل قبل الليلة {l.tightNights.map((n, i) => <span key={n}>{i ? '، ' : ''}<span className="num">{n}</span></span>)}</Badge>}
             {l.price.stale && needsBuying(l) && <Badge tone="warn">السعر يحتاج مراجعة</Badge>}
           </div>
         </button>

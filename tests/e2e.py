@@ -229,6 +229,25 @@ try:
         d.goto(URL + '#shop'); d.wait_for_selector('text=تسوق الليالي')
         d.screenshot(path=SHOTS / '10-desktop-shop.png')
         d.emulate_media(media='print'); d.pdf(path=str(SHOTS / '11-print.pdf')) if False else None
+        # install as an app: phones get a last intro step and a permanent section in «المزيد», in both UI languages
+        for name, ua, want in [
+            ('android', 'Mozilla/5.0 (Linux; Android 15; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36', 'Install and create shortcut'),
+            ('iphone', 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Mobile/15E148 Safari/604.1', 'Add to Home Screen'),
+        ]:
+            ic = b.new_context(viewport={'width': 390, 'height': 844}, user_agent=ua, is_mobile=True, has_touch=True)
+            ip = ic.new_page(); ip.goto(URL); ip.wait_for_selector('text=سؤال العشاء محسوم مسبقًا')
+            for _ in range(4): ip.get_by_role('button', exact=True, name='التالي').click()
+            dlg = ip.inner_text('[role=dialog]')
+            ok(f'{name}: install step after the family step, steps in Arabic and English', 'ثبّته على هاتفك' in dlg and want in dlg)
+            ip.get_by_role('button', exact=True, name='لاحقًا').click()
+            ip.goto(URL + '#more'); ip.wait_for_timeout(300)
+            ok(f'{name}: install steps stay in «المزيد»', want in ip.inner_text('main'))
+            ic.close()
+        dk = b.new_page(); dk.goto(URL); dk.wait_for_selector('text=سؤال العشاء محسوم مسبقًا')
+        for _ in range(3): dk.get_by_role('button', exact=True, name='التالي').click()
+        ok('desktop: no install step in the intro', dk.get_by_role('button', exact=True, name='ابدأ').count() == 1)
+        dk.close()
+
         b.close()
 finally:
     srv.terminate()

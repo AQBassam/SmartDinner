@@ -5,6 +5,8 @@ import type { TabId } from '../App';
 import { addDays, fmtTime } from '../lib/format';
 import { minutesOf } from '../lib/schedule';
 import type { Store } from '../store';
+import { useInstall } from '../lib/install';
+import { InstallGuide } from './InstallGuide';
 import { Chip } from './PlanTab';
 import { hasConflict, recipeConflicts } from './shared';
 import { Button, Icon, download, useToast } from './ui';
@@ -34,6 +36,7 @@ export function MoreTab({ store, go }: { store: Store; go: (t: TabId) => void })
   const { state, set, replace, persisted, gen, days } = store;
   const toast = useToast();
   const file = useRef<HTMLInputElement>(null);
+  const install = useInstall();
 
   const doExport = () => {
     download(`دليل-العشاء-نسخة-${new Date().toISOString().slice(0, 10)}.json`, exportBackup(state), 'application/json;charset=utf-8');
@@ -61,6 +64,10 @@ export function MoreTab({ store, go }: { store: Store; go: (t: TabId) => void })
         <Icon name="down" className="ms-auto size-4 rotate-90 text-muted" />
       </button>
 
+      <Section icon="phone" title={install.installed ? 'التطبيق على الهاتف' : 'تثبيت الدليل كتطبيق على الهاتف'} open={!install.installed && install.platform !== 'desktop'}>
+        <InstallGuide />
+      </Section>
+
       <Section icon="snow" title="خطة التجهيز المسبق" open>
         {(() => {
           const eves = state.nights.map((_, i) => {
@@ -75,7 +82,7 @@ export function MoreTab({ store, go }: { store: Store; go: (t: TabId) => void })
           return (
             <>
               <p className="text-muted">العشاء لا يحتاج وقتًا جديدًا؛ يحتاج أن يتوزع على ثلاث لحظات موجودة أصلًا في يوم الأسرة. <span className="num">{prepped}</span> من <span className="num">{RECIPES.length}</span> وصفة لها مهام مسبقة محددة بالدقائق، تظهر يومًا بيوم في تبويب «اليوم» وفي تذكيرات التقويم.</p>
-              <p className="mb-2 mt-4 font-bold text-teal-deep">يوم التسوق · {shops.map((m, i) => <span key={i} className="num">{i ? ' / ' : ''}{m}</span>)} دقيقة للدفعات</p>
+              <p className="mb-2 mt-4 font-bold text-teal-deep">يوم التسوق: {shops.map((m, i) => <span key={i}>{i ? '، ' : ''}<span className="num">{m}</span></span>)} دقيقة للدفعات بالترتيب</p>
               <List items={[
                 'تقسيم الدجاج واللحم والسمك إلى أكياس مسطحة، على كل كيس اسم الوجبة ورقم الليلة؛ الحصص القريبة في الثلاجة والبقية في الفريزر.',
                 'ما يُشكَّل مرة واحدة يُشكَّل يوم الشراء ويُجمَّد جاهزًا (الكفتة).',
