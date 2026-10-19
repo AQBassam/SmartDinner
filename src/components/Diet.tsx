@@ -1,6 +1,7 @@
 import { ING, RECIPE, type Recipe } from '../lib/data';
 import { ANIMAL_LABEL, DIET_ORDER, DIETS, dietFit, resolveNight, SEPARATE_DISH, type DietId, type Fit, type NightPlan } from '../lib/diet';
-import { arCount, fmtQty, PERSON } from '../lib/format';
+import { arCount, fmtQty, PERSON, todayISO } from '../lib/format';
+import type { Store } from '../store';
 import { dietMembers, servings, type AppState } from '../lib/state';
 import { Icon } from './ui';
 
@@ -9,9 +10,19 @@ const dietList = (ds: DietId[]) => ds.map((d) => DIETS[d].short).join('، ');
 /** «for N members» after the preposition لـ: the dual takes its genitive form. */
 const forPeople = (n: number) => (n === 1 ? 'فرد واحد' : n === 2 ? 'فردين' : arCount(n, PERSON));
 
-/** Tonight's dish for this table: who shares it, who gets a set-aside portion, who a separate dish. */
-export function nightPlan(state: AppState, recipeId: string): NightPlan {
-  return resolveNight(recipeId, servings(state), dietMembers(state), state.optionalOff);
+/**
+ * The dish for this table. On a planned night the plan's own resolution is used, so the recipe page, kitchen
+ * mode and shopping list agree on the substitute; off the plan, the first fitting substitute.
+ */
+export function nightPlan(store: Store, recipeId: string, night?: number): NightPlan {
+  const { state, gen } = store;
+  const today = todayISO();
+  const idx = night !== undefined ? night - 1
+    : state.nights.findIndex((id, i) => id === recipeId && (gen.nightDates[i] ?? '') >= today);
+  const np = idx >= 0 ? gen.nightPlans[idx] : undefined;
+  if (np && np.recipeId === recipeId) return np;
+  return resolveNight(recipeId, servings(state), dietMembers(state), state.optionalOff,
+    { avoidAllergens: state.avoidAllergens, avoidIngredients: state.avoidIngredients });
 }
 
 const FIT_TEXT: Record<Fit, string> = { all: 'كما هي', split: 'تفترق', separate: 'طبق منفصل' };

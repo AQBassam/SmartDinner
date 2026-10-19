@@ -20,7 +20,7 @@ function safeStorage(): Storage | null {
 
 export function planInput(state: AppState, today = todayISO()): PlanInput {
   return {
-    servings: servings(state), members: members(state), special: dietMembers(state), startDate: state.startDate, nights: state.nights,
+    servings: servings(state), members: members(state), special: dietMembers(state), avoidAllergens: state.avoidAllergens, avoidIngredients: state.avoidIngredients, startDate: state.startDate, nights: state.nights,
     optionalOff: state.optionalOff, have: state.have, stock: state.stock, priceBook: state.priceBook,
     storeMode: state.storeMode, today,
   };

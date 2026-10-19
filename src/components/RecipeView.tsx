@@ -37,7 +37,7 @@ export function RecipeSheet({ store, recipeId, kitchenFirst = false, onClose }: 
   if (!r) return null;
   const { state, set } = store;
   const sv = servings(state);
-  const np = nightPlan(state, r.id);
+  const np = nightPlan(store, r.id);
   const rows = ingredientRows(r, sv, state.optionalOff, np);
   const steps = stepsWithSplit(r, np);
   const nights = state.nights.map((id, i) => (id === r.id ? i : -1)).filter((i) => i >= 0);

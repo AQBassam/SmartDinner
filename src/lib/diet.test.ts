@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_ORDER, ING, RECIPE, RECIPES } from './data';
-import { allows, DIET_ORDER, dietFit, fixSeparateNights, resolveNight, separateViolations, type DietId } from './diet';
+import { allows, DIET_ORDER, dietFit, fixSeparateNights, planNights, proteinKey, resolveNight, separateViolations, type DietId, type NightPlan } from './diet';
 import { generate, type PlanInput } from './engine';
 import { defaultState, dietMembers, importBackup, loadState, sanitize, STORAGE_KEY } from './state';
 
@@ -99,5 +99,38 @@ describe('special members in the saved state', () => {
     const t = sanitize(s);
     expect(t.special).toEqual([{ group: 'adults', diet: 'vegan' }, { group: 'teens', diet: 'vegan' }]);
     expect(dietMembers(t).map((m) => m.servings)).toEqual([1.15, 1.2 * 1.15]);
+  });
+});
+
+describe('variety: substitutes rotate across the plan (3.7.1)', () => {
+  const PROTEINS = ['chickpeas_can', 'hummus_dip', 'fava_can', 'red_lentils', 'falafel', 'halloumi', 'tuna', 'fish_fillet', 'eggs', 'labneh'];
+  /** the protein sources one member eats each night: their substitutes plus what they eat from the shared dish */
+  const eats = (nps: NightPlan[], d: DietId) => nps.map((np) => new Set([
+    ...np.subs.filter((s) => s.to && s.diets.includes(d)).map((s) => proteinKey(s.to!.i)),
+    ...RECIPE[np.recipeId].items.filter((it) => PROTEINS.includes(it.i) && allows(d, ING[it.i])).map((it) => proteinKey(it.i)),
+  ].filter((x) => PROTEINS.includes(x))));
+  it('vegan member, default 15 nights: chickpeas alone on 4 nights, not 12; four protein sources', () => {
+    const nights = eats(planNights({ nights: DEFAULT_ORDER, total: 5, special: [{ diet: 'vegan', servings: 1 }] }), 'vegan');
+    expect(nights.filter((n) => n.size === 1 && n.has('chickpeas_can')).length).toBe(4);
+    expect(new Set(nights.flatMap((n) => [...n]))).toEqual(new Set(['chickpeas_can', 'fava_can', 'red_lentils', 'falafel']));
+  });
+  it('fish-and-dairy member: halloumi no longer every night it fits; fish, tuna, lentils, fava and falafel all appear', () => {
+    const nights = eats(planNights({ nights: DEFAULT_ORDER, total: 5, special: [{ diet: 'pescoDairy', servings: 1 }] }), 'pescoDairy');
+    expect(nights.filter((n) => n.has('halloumi')).length).toBe(3);
+    for (const p of ['fish_fillet', 'tuna', 'red_lentils', 'fava_can', 'falafel']) expect(nights.some((n) => n.has(p)), p).toBe(true);
+  });
+  it('the first night still prefers the recipe order; a plan resolution matches the shopping list', () => {
+    const nps = planNights({ nights: DEFAULT_ORDER, total: 5, special: [{ diet: 'vegan', servings: 1 }] });
+    expect(nps[0].subs.find((s) => s.from === 'chicken_breast')?.to?.i).toBe('chickpeas_can');
+    const g = generate(plan({ special: [{ diet: 'vegan', servings: 1 }] }));
+    for (const [i, np] of g.nightPlans.entries()) for (const s of np.subs) if (s.to)
+      expect(need(g, i + 1, s.to.i), `${np.recipeId} ${s.to.i}`).toBeGreaterThan(0);
+  });
+  it('a substitute never brings back what the family avoids: no chickpeas when excluded, no tahini when sesame is', () => {
+    const nps = planNights({ nights: DEFAULT_ORDER, total: 5, special: [{ diet: 'vegan', servings: 1 }], avoidIngredients: ['chickpeas_can'], avoidAllergens: ['sesame'] });
+    const chosen = nps.flatMap((np) => np.subs.map((s) => s.to?.i));
+    expect(chosen).not.toContain('chickpeas_can');
+    expect(chosen).not.toContain('tahini');
+    expect(nps[0].subs.find((s) => s.from === 'yogurt')?.to).toBeNull();
   });
 });

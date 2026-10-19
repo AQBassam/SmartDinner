@@ -1,5 +1,5 @@
 import { BASE_SERVINGS, CATEGORY_ORDER, ING, RECIPE, type Category, type Ingredient, type StoreId } from './data';
-import { resolveNight, SEPARATE_DISH, type DietMember } from './diet';
+import { planNights, SEPARATE_DISH, type DietMember, type NightPlan } from './diet';
 import { addDays, arCount } from './format';
 import { resolvePrice, unitCost, type PriceRecord, type PriceSource, type ResolvedPrice, type StoreMode } from './prices';
 
@@ -17,6 +17,9 @@ export interface PlanInput {
   members: number;
   /** members on a restricted eating pattern (their servings are part of `servings`) */
   special?: DietMember[];
+  /** what the family avoids: a substitute never brings it back */
+  avoidAllergens?: string[];
+  avoidIngredients?: string[];
   startDate: string; // date of night 1
   nights: string[]; // recipe ids, index 0 = night 1
   /** `${recipeId}:${ingId}` of optional items the family switched off */
@@ -103,6 +106,8 @@ export interface Generated {
   reminders: Reminder[];
   budget: Budget;
   nightDates: string[];
+  /** per night: who shares the dish, the set-aside portion and its substitutes, or a separate dish */
+  nightPlans: NightPlan[];
 }
 
 // ---------------------------------------------------------------------------
@@ -144,7 +149,12 @@ function assignBatch(ing: Ingredient, night: number): { batch: number; storage: 
   return { batch: maxK, storage: ing.freezable ? 'freeze' : 'tight' };
 }
 
-export function collectNeeds(plan: Pick<PlanInput, 'nights' | 'optionalOff' | 'servings' | 'special'>): Need[] {
+export function nightPlansOf(plan: Pick<PlanInput, 'nights' | 'optionalOff' | 'servings' | 'special' | 'avoidAllergens' | 'avoidIngredients'>): NightPlan[] {
+  return planNights({ nights: plan.nights, total: plan.servings, special: plan.special ?? [], optionalOff: plan.optionalOff,
+    avoidAllergens: plan.avoidAllergens, avoidIngredients: plan.avoidIngredients });
+}
+
+export function collectNeeds(plan: Pick<PlanInput, 'nights' | 'optionalOff' | 'servings' | 'special' | 'avoidAllergens' | 'avoidIngredients'>, nightPlans = nightPlansOf(plan)): Need[] {
   const off = new Set(plan.optionalOff);
   const needs: Need[] = [];
   const push = (night: number, recipeId: string, ingId: string, q: number | undefined, sv: number, linear = false) => {
@@ -158,7 +168,7 @@ export function collectNeeds(plan: Pick<PlanInput, 'nights' | 'optionalOff' | 's
     const recipe = RECIPE[rid];
     if (!recipe) return;
     const night = idx + 1;
-    const np = resolveNight(rid, plan.servings, plan.special ?? [], off);
+    const np = nightPlans[idx];
     for (const it of recipe.items) {
       if (it.opt && off.has(`${rid}:${it.i}`)) continue;
       push(night, rid, it.i, it.q, np.eaters[it.i] ?? np.base);
@@ -175,7 +185,8 @@ interface Lot { qty: number; expires: number; line: PurchaseLine | null }
 export function generate(plan: PlanInput): Generated {
   const nightsCount = plan.nights.length;
   const nightDates = plan.nights.map((_, i) => nightDate(plan.startDate, i + 1));
-  const needs = collectNeeds(plan);
+  const nightPlans = nightPlansOf(plan);
+  const needs = collectNeeds(plan, nightPlans);
   const batchCount = Math.max(1, Math.ceil(nightsCount / BATCH_SPAN));
 
   const byIng = new Map<string, Need[]>();
@@ -293,7 +304,7 @@ export function generate(plan: PlanInput): Generated {
   const reminders = buildReminders(plan, batches, needs);
   const n = Math.max(1, nightsCount);
   return {
-    needs, batches, staples: staples.sort((a, b) => a.ing.name.localeCompare(b.ing.name, 'ar')), reminders, nightDates,
+    needs, nightPlans, batches, staples: staples.sort((a, b) => a.ing.name.localeCompare(b.ing.name, 'ar')), reminders, nightDates,
     budget: {
       purchase, consumption, perDinner: consumption / n, perPersonDinner: consumption / n / Math.max(1, plan.members),
       byCategory, bySource, unpriced, stale,

@@ -206,7 +206,7 @@ export function TodayTab({ store, today, openRecipe, cook, go, browse }: Props) 
                       ? <>ينقص {arCount(missing, ['مكوّن', 'مكوّنان', 'مكوّنات', 'مكوّنًا'])} في <button className="link-inline" onClick={() => go('shop')}>قائمة التسوق</button>.</>
                       : 'مكوناتها كلها في البيت حسب قائمة التسوق.'}
                   </p>
-                  {(() => { const line = specialLine(nightPlan(state, tonightR.id)); return line && (
+                  {(() => { const line = specialLine(nightPlan(store, tonightR.id, tonight.night)); return line && (
                     <p className="mt-2 inline-flex items-start gap-1.5 self-start rounded-xl bg-saffron-soft px-3 py-1.5 text-[13.5px] font-bold text-copper">
                       <Icon name="users" className="mt-0.5 size-4 shrink-0" />{line}
                     </p>
