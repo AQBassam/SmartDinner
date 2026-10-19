@@ -216,8 +216,11 @@ function PlanAction({ store, recipeId }: { store: Store; recipeId: string }) {
       }}>اجعلها عشاء الليلة</Button>
     );
   }
+  if (state.nights.length >= MAX_NIGHTS) {
+    return <p className="self-center text-[13px] text-muted">الخطة في حدها الأقصى ({MAX_NIGHTS} ليلة)؛ تُبدَّل بها وجبة من تبويب الخطة.</p>;
+  }
   return (
-    <Button variant="outline" disabled={state.nights.length >= MAX_NIGHTS} onClick={() => {
+    <Button variant="outline" onClick={() => {
       const before = state.nights;
       set((s) => ({ nights: [...s.nights, recipeId] }));
       toast('أُضيفت إلى آخر الخطة.', { label: 'تراجع', run: () => set({ nights: before }) });

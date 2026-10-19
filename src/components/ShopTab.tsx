@@ -166,7 +166,11 @@ export function ShopTab({ store, today, go }: { store: Store; today: string; go:
                 {c.qty && <div className="truncate text-[13px] text-muted">{c.qty}</div>}
               </div>
               <IconButton icon="x" label={`حذف ${c.name}`} className="no-print"
-                onClick={() => { if (confirm(`حذف «${c.name}»؟`)) set((s) => ({ custom: s.custom.filter((x) => x.id !== c.id) })); }} />
+                onClick={() => {
+                  const before = state.custom;
+                  set((s) => ({ custom: s.custom.filter((x) => x.id !== c.id) }));
+                  toast(`حُذف «${c.name}».`, { label: 'تراجع', run: () => set({ custom: before }) });
+                }} />
             </div>
           ))}
           <form onSubmit={addCustom} className="no-print flex flex-wrap gap-2 p-3">

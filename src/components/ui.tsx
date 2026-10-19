@@ -87,13 +87,14 @@ export function Badge({ tone = 'muted', children, icon }: { tone?: Tone; childre
   );
 }
 
-type BtnVariant = 'primary' | 'soft' | 'ghost' | 'outline' | 'danger';
+type BtnVariant = 'primary' | 'soft' | 'ghost' | 'outline' | 'danger' | 'dangerSolid';
 const btnCls: Record<BtnVariant, string> = {
   primary: 'bg-teal text-white hover:bg-teal-deep',
   soft: 'bg-teal-soft text-teal-deep hover:bg-[#d3e7d9]',
   ghost: 'text-teal-deep hover:bg-teal-soft',
   outline: 'border border-line bg-paper text-ink hover:bg-sand',
   danger: 'bg-danger-soft text-danger hover:bg-[#f6d9d6]',
+  dangerSolid: 'bg-danger text-white hover:bg-[#8f3a23]',
 };
 export function Button({ variant = 'soft', icon, children, className = '', ...rest }:
   ButtonHTMLAttributes<HTMLButtonElement> & { variant?: BtnVariant; icon?: string }) {
@@ -194,7 +195,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       <div aria-live="polite" role="status" className="no-print">
         {msg && (
-          <div className="on-dark toast-in fixed bottom-[calc(env(safe-area-inset-bottom)+88px)] left-1/2 z-[60] flex max-w-[calc(100%-32px)] -translate-x-1/2 items-center gap-3 rounded-2xl bg-teal-deep px-4 py-2.5 text-[14px] text-white shadow-lg lg:bottom-6">
+          <div className="on-dark toast-in fixed bottom-[calc(env(safe-area-inset-bottom)+88px)] left-1/2 z-[80] flex max-w-[calc(100%-32px)] -translate-x-1/2 items-center gap-3 rounded-2xl bg-teal-deep px-4 py-2.5 text-[14px] text-white shadow-lg lg:bottom-6">
             <span className="py-1">{msg.text}</span>
             {msg.action && (
               <button className="min-h-9 shrink-0 rounded-xl bg-white/15 px-3 font-bold" onClick={() => { msg.action!.run(); setMsg(null); }}>{msg.action.label}</button>
@@ -216,4 +217,29 @@ export function download(name: string, content: string, type: string) {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+
+// ---------------------------------------------------------------- confirm
+// In-app replacement for window.confirm: the browser's dialog shows the domain in the phone's language
+// ("dinner.bassamailab.xyz says…") and generic OK/Cancel; this one names what the button does.
+export interface ConfirmOptions { title: string; body: string; action: string; danger?: boolean }
+const ConfirmCtx = createContext<(o: ConfirmOptions) => Promise<boolean>>(async () => false);
+export const useConfirm = () => useContext(ConfirmCtx);
+export function ConfirmProvider({ children }: { children: ReactNode }) {
+  const [req, setReq] = useState<(ConfirmOptions & { resolve: (v: boolean) => void }) | null>(null);
+  const ask = useCallback((o: ConfirmOptions) => new Promise<boolean>((resolve) => setReq({ ...o, resolve })), []);
+  const done = useCallback((v: boolean) => { setReq((r) => { r?.resolve(v); return null; }); }, []);
+  const cancel = useCallback(() => done(false), [done]);
+  return (
+    <ConfirmCtx.Provider value={ask}>
+      {children}
+      <Sheet open={!!req} onClose={cancel} title={req?.title ?? ''}>
+        <p className="text-[15px] leading-relaxed text-ink/85">{req?.body}</p>
+        <div className="mt-5 flex flex-wrap gap-2">
+          <Button variant={req?.danger ? 'dangerSolid' : 'primary'} className="flex-1" onClick={() => done(true)}>{req?.action}</Button>
+          <Button variant="outline" className="flex-1" onClick={cancel}>إلغاء</Button>
+        </div>
+      </Sheet>
+    </ConfirmCtx.Provider>
+  );
 }

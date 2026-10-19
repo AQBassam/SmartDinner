@@ -41,6 +41,8 @@ export function useInstall() {
   return {
     platform: detectPlatform(),
     installed: installedNow || isStandalone(),
+    /** installed from this browser tab just now; the app itself opens from its home-screen icon */
+    installedHere: installedNow && !isStandalone(),
     canPrompt: !!deferred,
     /** Chrome's own dialog; resolves true when the person accepted */
     prompt: async (): Promise<boolean> => {

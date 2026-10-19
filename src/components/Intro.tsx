@@ -11,8 +11,9 @@ export function Intro({ store }: { store: Store }) {
   const { state, set } = store;
   const [step, setStep] = useState(0);
   const install = useInstall();
+  // decided once: installing during the intro must not remove the step the person is standing on
+  const [withInstall] = useState(() => install.platform !== 'desktop' && !install.installed);
   if (state.seenIntro) return null;
-  const withInstall = install.platform !== 'desktop' && !install.installed;
   const t = state.times;
   const steps = [
     {
@@ -62,7 +63,7 @@ export function Intro({ store }: { store: Store }) {
             {[...steps, null, ...(withInstall ? [null] : [])].map((_, i) => <span key={i} className={`h-2 rounded-full transition-all ${i === step ? 'w-6 bg-teal' : 'w-2 bg-line'}`} />)}
           </div>
           {!last && !family && <button className="min-h-11 px-3 text-[14px] font-bold text-muted" onClick={finish}>تخطٍّ</button>}
-          {last && withInstall && <button className="min-h-11 px-3 text-[14px] font-bold text-muted" onClick={finish}>لاحقًا</button>}
+          {last && withInstall && !install.installed && <button className="min-h-11 px-3 text-[14px] font-bold text-muted" onClick={finish}>لاحقًا</button>}
           <Button variant="primary" onClick={() => (last ? finish() : setStep(step + 1))}>{last ? 'ابدأ' : 'التالي'}</Button>
         </div>
       </div>

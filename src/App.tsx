@@ -6,7 +6,7 @@ import { RecipesTab, type RecipePreset } from './components/RecipesTab';
 import { TodayTab } from './components/TodayTab';
 import { Intro } from './components/Intro';
 import { ShopTab } from './components/ShopTab';
-import { Icon, ToastProvider } from './components/ui';
+import { ConfirmProvider, Icon, ToastProvider } from './components/ui';
 import { arCount, fmtDate, PERSON, todayISO } from './lib/format';
 import { members } from './lib/state';
 import { useStore } from './store';
@@ -60,6 +60,7 @@ export default function App() {
 
   return (
     <ToastProvider>
+    <ConfirmProvider>
       <header className="no-print sticky top-0 z-30 border-b border-line/60 bg-sand/92 backdrop-blur">
         <div className="mx-auto flex max-w-[1200px] items-center gap-3 px-4 py-2.5 md:px-8 md:py-3">
           <button onClick={() => go('today')} className="flex min-w-0 flex-1 items-center gap-3 text-start lg:flex-none" aria-label="دليل العشاء المنزلي، صفحة اليوم">
@@ -136,6 +137,7 @@ export default function App() {
 
       <RecipeSheet store={store} recipeId={recipeId} kitchenFirst={kitchenFirst} onClose={() => { setRecipeId(null); setKitchenFirst(false); }} />
       {import.meta.env.MODE !== 'test' && <Intro store={store} />}
+    </ConfirmProvider>
     </ToastProvider>
   );
 }

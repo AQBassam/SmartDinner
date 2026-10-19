@@ -173,13 +173,13 @@ try:
         page.wait_for_timeout(300)
         ok('malicious backup rejected', page.evaluate('window.__pwned') is None and 'غير صحيحة' in page.inner_text('[role=status]'))
         v1 = {'version': 1, 'startDate': '2026-11-01', 'items': [{'name': 'بيض', 'qty': '18', 'batch': 'first'}, {'name': 'حفاضات', 'qty': 'كيس', 'batch': 'second'}]}
-        page.once('dialog', lambda dlg: dlg.accept())
         page.locator('input[type=file]').set_input_files({'name': 'v1.json', 'mimeType': 'application/json', 'buffer': json.dumps(v1, ensure_ascii=False).encode()})
+        page.get_by_role('button', exact=True, name='استعادة النسخة').click()
         page.wait_for_timeout(300)
         ok('v1 backup migrated', page.evaluate("JSON.parse(localStorage.getItem('sdg.state.v3')).custom[0].name") == 'حفاضات')
         fx = pathlib.Path(__file__).resolve().parent.parent / 'src/lib/__fixtures__/html-v2-backup.json'
-        page.once('dialog', lambda dlg: dlg.accept())
         page.locator('input[type=file]').set_input_files(str(fx))
+        page.get_by_role('button', exact=True, name='استعادة النسخة').click()
         page.wait_for_timeout(300)
         st = json.loads(page.evaluate("localStorage.getItem('sdg.state.v3')"))
         ok('Smart_Shopping_List_v2 backup migrated', st['household']['adults'] == 6 and st['nights'][0] == 'falafel_wraps' and len(st['priceBook']) == 3)
@@ -229,6 +229,18 @@ try:
         d.goto(URL + '#shop'); d.wait_for_selector('text=تسوق الليالي')
         d.screenshot(path=SHOTS / '10-desktop-shop.png')
         d.emulate_media(media='print'); d.pdf(path=str(SHOTS / '11-print.pdf')) if False else None
+        # no native browser dialogs anywhere; destructive actions confirm in-app and can be undone
+        native = []
+        page.on('dialog', lambda d: (native.append(d.message), d.dismiss()))
+        page.evaluate("() => { const s = JSON.parse(localStorage.getItem('sdg.state.v3')); s.seenIntro = true; localStorage.setItem('sdg.state.v3', JSON.stringify(s)); }")
+        page.goto(URL + '#more'); page.reload(); page.wait_for_timeout(400)
+        page.evaluate("document.querySelectorAll('main details').forEach(d => d.open = true)")
+        nights_before = page.evaluate("JSON.parse(localStorage.getItem('sdg.state.v3')).nights.length")
+        page.get_by_role('button', exact=True, name='إعادة ضبط كاملة').click()
+        page.get_by_role('button', exact=True, name='حذف كل البيانات').click(); page.wait_for_timeout(200)
+        page.get_by_role('button', exact=True, name='تراجع').click(); page.wait_for_timeout(200)
+        ok('reset: in-app confirm, then undo restores the plan', page.evaluate("JSON.parse(localStorage.getItem('sdg.state.v3')).nights.length") == nights_before and not native)
+
         # install as an app: phones get a last intro step and a permanent section in «المزيد», in both UI languages
         for name, ua, want in [
             ('android', 'Mozilla/5.0 (Linux; Android 15; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36', 'Install and create shortcut'),
@@ -239,8 +251,13 @@ try:
             for _ in range(4): ip.get_by_role('button', exact=True, name='التالي').click()
             dlg = ip.inner_text('[role=dialog]')
             ok(f'{name}: install step after the family step, steps in Arabic and English', 'ثبّته على هاتفك' in dlg and want in dlg)
-            ip.get_by_role('button', exact=True, name='لاحقًا').click()
+            ip.evaluate("window.dispatchEvent(new Event('appinstalled'))"); ip.wait_for_timeout(150)
+            btns = ip.locator('[role=dialog] button').all_inner_texts()
+            ok(f'{name}: installed during the intro → only «ابدأ», no «التالي»/«لاحقًا»', 'ابدأ' in btns and 'التالي' not in btns and 'لاحقًا' not in btns)
+            ip.get_by_role('button', exact=True, name='ابدأ').click()
             ip.goto(URL + '#more'); ip.wait_for_timeout(300)
+            ok(f'{name}: «المزيد» says it is installed', 'التطبيق على الهاتف' in ip.inner_text('main'))
+            ip.reload(); ip.wait_for_timeout(300)  # a fresh visit in the browser, not installed: the steps are back
             ok(f'{name}: install steps stay in «المزيد»', want in ip.inner_text('main'))
             ic.close()
         dk = b.new_page(); dk.goto(URL); dk.wait_for_selector('text=سؤال العشاء محسوم مسبقًا')

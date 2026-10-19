@@ -179,6 +179,7 @@ try:
         page.goto(URL + '#more'); page.wait_for_timeout(300)
         page.evaluate("document.querySelectorAll('main details').forEach(d => d.open = true)")
         page.locator('input[type=file]').set_input_files({'name': 'backup.json', 'mimeType': 'application/json', 'buffer': backup})
+        page.get_by_role('button', exact=True, name='استعادة النسخة').click()
         page.wait_for_timeout(600)
         after = json.loads(page.evaluate("localStorage.getItem('sdg.state.v3')"))
         keys = ['household', 'nights', 'startDate', 'checked', 'stock', 'favorites', 'priceBook', 'times', 'optionalOff', 'custom']

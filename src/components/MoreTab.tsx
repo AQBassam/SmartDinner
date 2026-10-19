@@ -9,7 +9,7 @@ import { useInstall } from '../lib/install';
 import { InstallGuide } from './InstallGuide';
 import { Chip } from './PlanTab';
 import { hasConflict, recipeConflicts } from './shared';
-import { Button, Icon, download, useToast } from './ui';
+import { Button, Icon, download, useConfirm, useToast } from './ui';
 
 function Section({ icon, title, children, open = false }: { icon: string; title: string; children: ReactNode; open?: boolean }) {
   return (
@@ -37,6 +37,7 @@ export function MoreTab({ store, go }: { store: Store; go: (t: TabId) => void })
   const toast = useToast();
   const file = useRef<HTMLInputElement>(null);
   const install = useInstall();
+  const ask = useConfirm();
 
   const doExport = () => {
     download(`دليل-العشاء-نسخة-${new Date().toISOString().slice(0, 10)}.json`, exportBackup(state), 'application/json;charset=utf-8');
@@ -45,10 +46,11 @@ export function MoreTab({ store, go }: { store: Store; go: (t: TabId) => void })
   const doImport = async (f: File) => {
     try {
       const { state: s, from, notes } = importBackup(await f.text());
-      if (!confirm('ستحل النسخة المستوردة محل الخطة والقائمة الحاليتين. متابعة؟')) return;
-      replace(s);
+      if (!await ask({ title: 'استعادة النسخة', body: 'تحل النسخة المستوردة محل الخطة وقائمة التسوق والأسعار الحالية في هذا الجهاز.', action: 'استعادة النسخة' })) return;
+      const before = state;
+      replace({ ...s, seenIntro: true }); // a restored family is not a first visit
       const label = { v1: 'الإصدار الأول', 'html-v2': 'النسخة الثانية (HTML)', 'react-v2': 'نسخة المعاينة السابقة', v3: 'نسخة احتياطية' }[from];
-      toast(`استُعيدت ${label}.${notes.length ? ' ' + notes.join(' ') : ''}`);
+      toast(`استُعيدت ${label}.${notes.length ? ' ' + notes.join(' ') : ''}`, { label: 'تراجع', run: () => replace(before) });
     } catch (e) {
       toast(e instanceof Error ? e.message : 'تعذر الاستيراد.');
     } finally {
@@ -161,14 +163,26 @@ export function MoreTab({ store, go }: { store: Store; go: (t: TabId) => void })
       <Section icon="more" title="الإعدادات">
         <p className="text-muted">المكونات الاختيارية تُفعَّل وتُلغى من صفحة كل وصفة.</p>
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
-          <Button variant="outline" onClick={() => { if (confirm('إلغاء كل علامات الشراء؟')) { set((s) => ({ checked: {}, custom: s.custom.map((c) => ({ ...c, checked: false })) })); toast('أُلغيت العلامات.'); } }}>
+          <Button variant="outline" onClick={() => {
+            const before = { checked: state.checked, custom: state.custom };
+            set((s) => ({ checked: {}, custom: s.custom.map((c) => ({ ...c, checked: false })) }));
+            toast('أُلغيت علامات الشراء.', { label: 'تراجع', run: () => set(before) });
+          }}>
             إلغاء علامات الشراء
           </Button>
-          <Button variant="outline" onClick={() => { if (confirm('حذف كل الأسعار المسجلة لكل المتاجر والعودة إلى الأسعار الافتراضية؟')) { set({ priceBook: [], storeMode: 'auto' }); toast('حُذف سجل الأسعار وأُعيدت الأسعار الافتراضية.'); } }}>
+          <Button variant="outline" onClick={async () => {
+            if (!await ask({ title: 'إعادة الأسعار الافتراضية', body: `يُحذف ${state.priceBook.length} سعرًا سجلتها الأسرة لكل المتاجر، وتعود القائمة والميزانية إلى أسعار لولو الموثقة.`, action: 'حذف الأسعار المسجلة', danger: true })) return;
+            const before = { priceBook: state.priceBook, storeMode: state.storeMode };
+            set({ priceBook: [], storeMode: 'auto' });
+            toast('حُذفت الأسعار المسجلة.', { label: 'تراجع', run: () => set(before) });
+          }}>
             إعادة الأسعار الافتراضية
           </Button>
-          <Button variant="danger" className="sm:col-span-2" onClick={() => {
-            if (confirm('سيُحذف كل شيء: الخطة، الأصناف الإضافية، الأسعار، العلامات. يُنصح بحفظ نسخة احتياطية أولًا. متابعة؟')) { replace(defaultState()); toast('أُعيد ضبط الدليل.'); }
+          <Button variant="danger" className="sm:col-span-2" onClick={async () => {
+            if (!await ask({ title: 'إعادة ضبط كاملة', body: 'يُحذف كل شيء في هذا الجهاز: الخطة، والأسرة، وقائمة التسوق، والأصناف الإضافية، والأسعار، والعلامات. «حفظ نسخة» أولًا يتيح استعادتها لاحقًا.', action: 'حذف كل البيانات', danger: true })) return;
+            const before = state;
+            replace(defaultState());
+            toast('أُعيد ضبط الدليل.', { label: 'تراجع', run: () => replace(before) });
           }}>إعادة ضبط كاملة</Button>
         </div>
       </Section>

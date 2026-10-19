@@ -27,7 +27,8 @@ const STEPS: Record<Exclude<Platform, 'desktop'>, { title: string; steps: ReactN
       <>للأسفل قليلًا، ثم <Ui ar="إضافة إلى الشاشة الرئيسية" en="Add to Home Screen" />.</>,
       <>يبقى خيار <span dir="ltr" className="font-bold">Open as Web App</span> مفعّلًا إن ظهر، ثم <Ui ar="إضافة" en="Add" />.</>,
     ],
-    note: 'في Chrome على الآيفون: زر المشاركة في شريط العنوان، ثم «إضافة إلى الشاشة الرئيسية» (Add to Home Screen).',
+    note: <>في Chrome على الآيفون: زر المشاركة في شريط العنوان، ثم «إضافة إلى الشاشة الرئيسية» (Add to Home Screen).<br />
+      على الآيفون يحتفظ التطبيق المثبّت ببياناته منفصلة عن Safari، فيبدأ من جديد. ما سُجّل في Safari يُنقل إليه بـ«حفظ نسخة» ثم «استعادة نسخة» من «المزيد».</>,
   },
 };
 
@@ -36,14 +37,15 @@ const STEPS: Record<Exclude<Platform, 'desktop'>, { title: string; steps: ReactN
  * otherwise the steps for this phone come first and the other phone's steps sit behind a disclosure.
  */
 export function InstallGuide({ compact = false }: { compact?: boolean }) {
-  const { platform, installed, canPrompt, prompt } = useInstall();
+  const { platform, installed, installedHere, canPrompt, prompt } = useInstall();
   const toast = useToast();
   const [other, setOther] = useState(false);
 
   if (installed) {
     return (
       <p className="flex items-center gap-2 rounded-2xl bg-teal-soft p-3 text-[14px] font-bold text-teal-deep">
-        <Icon name="check" className="size-5" /> الدليل مثبّت على هذا الجهاز ويعمل كتطبيق.
+        <Icon name="check" className="size-5 shrink-0" />
+        {installedHere ? 'ثُبّت الدليل. يفتح من أيقونته على الشاشة الرئيسية، وكل بياناتك فيه.' : 'الدليل مثبّت على هذا الجهاز ويعمل كتطبيق.'}
       </p>
     );
   }
