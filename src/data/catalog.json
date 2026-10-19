@@ -51,7 +51,8 @@
     "date": "2026-10-18",
     "store": "lulu",
     "url": "https://gcc.luluhypermarket.com/en-om/lulu-frozen-chicken-breast-2-kg/p/1128182"
-   }
+   },
+   "animal": "poultry"
   },
   {
    "id": "chicken_thighs",
@@ -74,7 +75,8 @@
     "date": "2026-10-18",
     "store": "lulu",
     "url": "https://gcc.luluhypermarket.com/en-om/a-saffa-frozen-chicken-thighs-1-kg/p/890121"
-   }
+   },
+   "animal": "poultry"
   },
   {
    "id": "minced_beef",
@@ -97,7 +99,8 @@
     "date": "2026-10-18",
     "store": "lulu",
     "url": "https://gcc.luluhypermarket.com/en-om/south-african-minced-beef-500-g/p/521036-ea/"
-   }
+   },
+   "animal": "meat"
   },
   {
    "id": "fish_fillet",
@@ -123,7 +126,8 @@
     "date": "2026-10-18",
     "store": "lulu",
     "url": "https://gcc.luluhypermarket.com/en-om/lulu-frozen-white-fish-fillet-1-kg/p/701783"
-   }
+   },
+   "animal": "fish"
   },
   {
    "id": "falafel",
@@ -176,7 +180,8 @@
     "date": "2026-10-18",
     "store": "lulu",
     "url": "https://gcc.luluhypermarket.com/en-om/dana-omani-white-eggs-large-30-pcs/p/42387/"
-   }
+   },
+   "animal": "egg"
   },
   {
    "id": "yogurt",
@@ -200,7 +205,8 @@
     "store": "lulu",
     "url": "https://gcc.luluhypermarket.com/en-om/mazoon-fresh-yoghurt-full-fat-1-kg/p/1679877",
     "note": "Mazoon Fresh Yoghurt Full Fat 1 kg"
-   }
+   },
+   "animal": "dairy"
   },
   {
    "id": "labneh",
@@ -224,7 +230,8 @@
     "store": "lulu",
     "url": "https://gcc.luluhypermarket.com/en-om/al-safi-creamy-labneh-400-g/p/2018801",
     "note": "Al Safi Creamy Labneh 400 g"
-   }
+   },
+   "animal": "dairy"
   },
   {
    "id": "hummus_dip",
@@ -264,7 +271,8 @@
    "price": {
     "value": 0.9,
     "source": "estimate"
-   }
+   },
+   "animal": "dairy"
   },
   {
    "id": "mozzarella",
@@ -285,7 +293,34 @@
     "value": 1.59,
     "source": "recorded",
     "store": "lulu"
-   }
+   },
+   "animal": "dairy"
+  },
+  {
+   "id": "halloumi",
+   "name": "جبن حلوم",
+   "cat": "dairy",
+   "unit": "g",
+   "scale": "linear",
+   "keepDays": 14,
+   "freezable": true,
+   "sold": {
+    "type": "pack",
+    "size": 250,
+    "label": "عبوة 250 غ"
+   },
+   "price": {
+    "value": 1.3,
+    "source": "verified",
+    "date": "2026-10-19",
+    "store": "lulu",
+    "url": "https://gcc.luluhypermarket.com/en-om/balade-farms-original-halloumi-cheese-250-g/p/1262953/",
+    "note": "Balade Farms Original Halloumi 250 g"
+   },
+   "allergens": [
+    "milk"
+   ],
+   "animal": "dairy"
   },
   {
    "id": "pita",
@@ -316,7 +351,10 @@
     "date": "2026-10-18",
     "store": "lulu",
     "url": "https://gcc.luluhypermarket.com/en-om/lulu-arabic-bread-12-pcs/p/1193940"
-   }
+   },
+   "mayContain": [
+    "milk"
+   ]
   },
   {
    "id": "tortilla",
@@ -347,7 +385,10 @@
     "store": "lulu",
     "url": "https://gcc.luluhypermarket.com/en-om/mission-original-tortilla-wraps-large-6-pcs-378-g/p/1486499",
     "note": "Mission Original Tortilla Wraps Large 6 pcs"
-   }
+   },
+   "mayContain": [
+    "milk"
+   ]
   },
   {
    "id": "tomato",
@@ -663,7 +704,8 @@
     "date": "2026-10-18",
     "store": "lulu",
     "url": "https://gcc.luluhypermarket.com/en-om/simak-skipjack-tuna-chunks-in-sunflower-oil-170-g/p/2322274/"
-   }
+   },
+   "animal": "fish"
   },
   {
    "id": "chickpeas_can",
@@ -931,7 +973,10 @@
    "price": {
     "value": 0.3,
     "source": "estimate"
-   }
+   },
+   "mayContain": [
+    "egg"
+   ]
   },
   {
    "id": "frozen_peas",

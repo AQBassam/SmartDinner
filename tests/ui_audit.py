@@ -26,6 +26,8 @@ PROBE = r"""
     const a = c.getBoundingClientRect();
     for (const t of texts) {
       if (t === c || c.contains(t) || t.contains(c)) continue;
+      // the fixed bottom bar floats over scrolling content by design; what lies under it at this scroll is not a layout bug
+      if (t.closest('nav') && getComputedStyle(t.closest('nav')).position === 'fixed') continue;
       const b = t.getBoundingClientRect();
       const ix = Math.min(a.right, b.right) - Math.max(a.left, b.left), iy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
       if (ix > 3 && iy > 3) out.push({ kind: 'covered', text: label(t), by: label(c) });
@@ -82,6 +84,8 @@ try:
             page.get_by_role('button', exact=True, name='ابدأ').click()
             # make "today" a dinner night so every block exists
             st = json.loads(page.evaluate("localStorage.getItem('sdg.state.v3')")); st['startDate'] = '2026-10-20'
+            # one member of each eating pattern, so the set-aside portion appears on every screen that shows it
+            st['special'] = [{'group': 'adults', 'diet': 'vegan'}, {'group': 'adults', 'diet': 'pescoDairy'}]
             page.evaluate("s => localStorage.setItem('sdg.state.v3', s)", json.dumps(st, ensure_ascii=False)); page.reload()
             page.wait_for_selector('text=ابدأ التحضير')
             audit(page, f'{width}-today')

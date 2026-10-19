@@ -1,5 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import { RECIPE, RECIPES, TAGS } from '../lib/data';
+import { DEFAULT_ORDER, RECIPE, RECIPES, TAGS } from '../lib/data';
+import { dietFit, fixSeparateNights, separateViolations, type DietId } from '../lib/diet';
 import { addDays, arCount, diffDays, fmtDate, fmtDateShort, fmtTime, fromMinutes, toMinutes } from '../lib/format';
 import { buildIcs } from '../lib/ics';
 import { minutesOf } from '../lib/schedule';
@@ -20,6 +21,14 @@ export function PlanTab({ store, today, openRecipe }: Props) {
   const N = state.nights.length;
   const dayIdx = diffDays(today, state.startDate);
   const tonight = dayIdx >= 0 && dayIdx < N ? dayIdx : null;
+  const diets = [...new Set(state.special.map((m) => m.diet))];
+  const repeats = separateViolations(state.nights, diets);
+  const fixRepeats = () => {
+    const before = state.nights;
+    const pool = [...DEFAULT_ORDER, ...RECIPES.map((r) => r.id).filter((id) => !DEFAULT_ORDER.includes(id))];
+    set({ nights: fixSeparateNights(state.nights, diets, pool) });
+    toast('استُبدلت الليالي المتكررة بوجبات تفترق للجميع.', { label: 'تراجع', run: () => set({ nights: before }) });
+  };
 
   const move = (i: number, d: -1 | 1) => set((s) => {
     const n = [...s.nights];
@@ -91,6 +100,15 @@ export function PlanTab({ store, today, openRecipe }: Props) {
             بعض ليالي الخطة تحتوي مسببات حساسية أو مكونات استبعدتها الأسرة. زر التبديل يقترح وصفات خالية منها أولًا.
           </p>
         )}
+        {repeats.length > 0 && (
+          <div className="mb-3 flex flex-col gap-2 rounded-2xl bg-warn-soft px-4 py-3 text-[13.5px] leading-relaxed text-warn sm:flex-row sm:items-center">
+            <span className="flex flex-1 items-start gap-2">
+              <Icon name="alert" className="mt-0.5 size-5 shrink-0" />
+              <span>الطبق المنفصل للحصة الخاصة يتكرر أكثر من مرة في 7 ليالٍ: {repeats.map((i) => `الليلة ${i + 1}`).join('، ')}.</span>
+            </span>
+            <Button variant="outline" className="shrink-0" onClick={fixRepeats}>استبدالها بوجبات تفترق</Button>
+          </div>
+        )}
         <ol className="space-y-2.5">
           {state.nights.map((rid, i) => {
             const r = RECIPE[rid];
@@ -103,6 +121,7 @@ export function PlanTab({ store, today, openRecipe }: Props) {
             const eve = days.get(addDays(date, -1))?.evening.filter((x) => x.night === i + 1) ?? [];
             const ahead = minutesOf(eve.filter((x) => x.kind === 'prep'));
             const thaw = eve.some((x) => x.kind === 'thaw');
+            const fits = diets.map((d) => dietFit(r, d, state.optionalOff).fit);
             return (
               <li key={`${i}-${rid}`}>
                 {batchStart && (
@@ -125,6 +144,9 @@ export function PlanTab({ store, today, openRecipe }: Props) {
                       {r.tags.slice(0, 1).map((tg) => <Badge key={tg} tone={tg === 'emergency' ? 'copper' : 'teal'}>{TAGS[tg]}</Badge>)}
                       {tight && <Badge tone="warn" icon="alert">مكوّن قد يذبل</Badge>}
                       <ConflictBadge c={conflict} />
+                      {fits.includes('separate')
+                        ? <Badge tone={repeats.includes(i) ? 'danger' : 'warn'} icon="users">{repeats.includes(i) ? 'طبق منفصل ثانٍ في الأسبوع' : 'طبق منفصل للحصة الخاصة'}</Badge>
+                        : fits.includes('split') && <Badge tone="copper" icon="users">حصة خاصة</Badge>}
                     </div>
                   </button>
                   <div className="flex shrink-0 flex-col items-center sm:flex-row">
@@ -193,7 +215,9 @@ export function RecipePicker({ open, title, current, used, state, onPick, onClos
   { open: boolean; title: string; current?: string; used: string[]; state: AppState; onPick: (id: string) => void; onClose: () => void }) {
   const [tag, setTag] = useState<string | null>(null);
   const list = useMemo(() => {
-    const score = (id: string) => (hasConflict(recipeConflicts(RECIPE[id], state)) ? 2 : 0) - (state.favorites.includes(id) ? 1 : 0);
+    const diets = [...new Set(state.special.map((m) => m.diet))] as DietId[];
+    const separate = (id: string) => diets.some((d) => dietFit(RECIPE[id], d, state.optionalOff).fit === 'separate');
+    const score = (id: string) => (hasConflict(recipeConflicts(RECIPE[id], state)) ? 2 : 0) + (separate(id) ? 1 : 0) - (state.favorites.includes(id) ? 1 : 0);
     return RECIPES.filter((r) => !tag || r.tags.includes(tag)).sort((a, b) => score(a.id) - score(b.id));
   }, [tag, state]);
   return (
@@ -213,7 +237,9 @@ export function RecipePicker({ open, title, current, used, state, onPick, onClos
                 <div className="min-w-0 flex-1">
                   <div className="font-bold">{state.favorites.includes(r.id) && <span className="text-copper" aria-label="مفضلة">★ </span>}{r.title}</div>
                   <div className="truncate text-[13px] text-muted">{r.subtitle}</div>
-                  <div className="mt-1"><ConflictBadge c={recipeConflicts(r, state)} /></div>
+                  <div className="mt-1 flex flex-wrap gap-1"><ConflictBadge c={recipeConflicts(r, state)} />
+                    {state.special.some((m) => dietFit(r, m.diet, state.optionalOff).fit === 'separate') && <Badge tone="warn" icon="users">طبق منفصل للحصة الخاصة</Badge>}
+                  </div>
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-1">
                   <Badge icon="clock"><span className="num">{r.total}</span> د</Badge>

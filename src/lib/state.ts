@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { AllergenEnum, DEFAULT_ORDER, ING, RECIPE, Sold } from './data';
+import { type DietMember } from './diet';
 import { addDays, todayISO } from './format';
 import { migrateAny } from './migrate';
 import type { PriceRecord } from './prices';
@@ -51,6 +52,8 @@ export const StateSchema = z.object({
     kids: z.number().int().min(0).max(20),
   }).refine((h) => h.adults + h.teens + h.kids >= 1 && h.adults + h.teens + h.kids <= 20),
   appetite: z.union([z.literal(0.85), z.literal(1), z.literal(1.15)]),
+  /** members who do not eat everything: their age group and eating pattern, no names */
+  special: z.array(z.object({ group: z.enum(['adults', 'teens', 'kids']), diet: z.enum(['pescoDairy', 'vegan']) })).max(20).default([]),
   startDate: ISO,
   nights: z.array(z.string()).min(1).max(MAX_NIGHTS),
   optionalOff: z.array(z.string().regex(/^[a-z0-9_]+:[a-z0-9_]+$/)).max(200),
@@ -79,11 +82,23 @@ export function servings(s: Pick<AppState, 'household' | 'appetite'>): number {
   return (h.adults * AGE_WEIGHTS.adults + h.teens * AGE_WEIGHTS.teens + h.kids * AGE_WEIGHTS.kids) * s.appetite;
 }
 
+/** Members on a restricted eating pattern, with their planning portion. */
+export function dietMembers(s: Pick<AppState, 'special' | 'appetite'>): DietMember[] {
+  return s.special.map((m) => ({ diet: m.diet, servings: AGE_WEIGHTS[m.group] * s.appetite }));
+}
+
+/** Drop special members beyond the head count of their age group (the family got smaller). */
+export function fitSpecial(special: AppState['special'], household: AppState['household']): AppState['special'] {
+  const left = { ...household };
+  return special.filter((m) => left[m.group]-- > 0);
+}
+
 export function defaultState(now = new Date()): AppState {
   return {
     schemaVersion: 3,
     household: { adults: 5, teens: 0, kids: 0 },
     appetite: 1,
+    special: [],
     startDate: addDays(todayISO(now), 1),
     nights: [...DEFAULT_ORDER],
     optionalOff: [],
@@ -117,6 +132,7 @@ export function sanitize(s: AppState): AppState {
   return {
     ...s,
     nights,
+    special: fitSpecial(s.special, s.household),
     optionalOff: [...new Set(s.optionalOff.filter(optOk))],
     checked: Object.fromEntries(Object.entries(s.checked).filter(([k, v]) => v && keyOk(k))),
     have: Object.fromEntries(Object.entries(s.have).filter(([k]) => !!ING[k])),

@@ -1,4 +1,5 @@
 import { BASE_SERVINGS, CATEGORY_ORDER, ING, RECIPE, type Category, type Ingredient, type StoreId } from './data';
+import { resolveNight, SEPARATE_DISH, type DietMember } from './diet';
 import { addDays, arCount } from './format';
 import { resolvePrice, unitCost, type PriceRecord, type PriceSource, type ResolvedPrice, type StoreMode } from './prices';
 
@@ -14,6 +15,8 @@ export interface PlanInput {
   servings: number;
   /** people at the table, for per-person figures */
   members: number;
+  /** members on a restricted eating pattern (their servings are part of `servings`) */
+  special?: DietMember[];
   startDate: string; // date of night 1
   nights: string[]; // recipe ids, index 0 = night 1
   /** `${recipeId}:${ingId}` of optional items the family switched off */
@@ -141,21 +144,28 @@ function assignBatch(ing: Ingredient, night: number): { batch: number; storage: 
   return { batch: maxK, storage: ing.freezable ? 'freeze' : 'tight' };
 }
 
-export function collectNeeds(plan: Pick<PlanInput, 'nights' | 'optionalOff' | 'servings'>): Need[] {
+export function collectNeeds(plan: Pick<PlanInput, 'nights' | 'optionalOff' | 'servings' | 'special'>): Need[] {
   const off = new Set(plan.optionalOff);
   const needs: Need[] = [];
+  const push = (night: number, recipeId: string, ingId: string, q: number | undefined, sv: number, linear = false) => {
+    const ing = ING[ingId];
+    if (!ing || ing.nobuy || sv <= EPS) return;
+    const qty = q === undefined ? 0 : linear ? q * sv / BASE_SERVINGS : scaledQty(ing, q, sv);
+    const { batch, storage } = assignBatch(ing, night);
+    needs.push({ night, recipeId, ingId: ing.id, qty, batch, storage });
+  };
   plan.nights.forEach((rid, idx) => {
     const recipe = RECIPE[rid];
     if (!recipe) return;
     const night = idx + 1;
+    const np = resolveNight(rid, plan.servings, plan.special ?? [], off);
     for (const it of recipe.items) {
       if (it.opt && off.has(`${rid}:${it.i}`)) continue;
-      const ing = ING[it.i];
-      if (!ing || ing.nobuy) continue;
-      const qty = it.q === undefined ? 0 : scaledQty(ing, it.q, plan.servings);
-      const { batch, storage } = assignBatch(ing, night);
-      needs.push({ night, recipeId: rid, ingId: ing.id, qty, batch, storage });
+      push(night, rid, it.i, it.q, np.eaters[it.i] ?? np.base);
     }
+    // a substitute portion is cooked for exactly these people, so it scales linearly
+    for (const sub of np.subs) if (sub.to) push(night, rid, sub.to.i, sub.to.q, sub.servings, true);
+    if (np.separate) for (const it of RECIPE[SEPARATE_DISH].items) push(night, SEPARATE_DISH, it.i, it.q, np.separate.servings);
   });
   return needs;
 }

@@ -9,6 +9,7 @@ import { togglePrep, type Store } from '../store';
 import { RecipeImage } from './RecipeImage';
 import { MOODS, RecipeCard, type RecipePreset } from './RecipesTab';
 import { Badge, Button, Glyph, Icon, Plate, Sheet, useToast } from './ui';
+import { nightPlan, specialLine } from './Diet';
 
 interface Props { store: Store; today: string; openRecipe: (id: string) => void; cook: (id: string) => void; go: (t: TabId) => void; browse: (p?: RecipePreset) => void }
 
@@ -205,6 +206,11 @@ export function TodayTab({ store, today, openRecipe, cook, go, browse }: Props) 
                       ? <>ينقص {arCount(missing, ['مكوّن', 'مكوّنان', 'مكوّنات', 'مكوّنًا'])} في <button className="link-inline" onClick={() => go('shop')}>قائمة التسوق</button>.</>
                       : 'مكوناتها كلها في البيت حسب قائمة التسوق.'}
                   </p>
+                  {(() => { const line = specialLine(nightPlan(state, tonightR.id)); return line && (
+                    <p className="mt-2 inline-flex items-start gap-1.5 self-start rounded-xl bg-saffron-soft px-3 py-1.5 text-[13.5px] font-bold text-copper">
+                      <Icon name="users" className="mt-0.5 size-4 shrink-0" />{line}
+                    </p>
+                  ); })()}
                   <div className="mt-auto flex flex-wrap gap-2 pt-4">
                     <Button variant="primary" icon="chef" className="flex-1" onClick={() => cook(tonightR.id)}>ابدأ التحضير</Button>
                     <Button variant="outline" onClick={() => openRecipe(tonightR.id)}>عرض الوصفة</Button>

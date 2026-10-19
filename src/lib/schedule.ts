@@ -1,5 +1,6 @@
 import { ING, RECIPE, RECIPES } from './data';
 import { BATCH_SPAN, nightDate, type Generated } from './engine';
+import { dietFit, type DietId } from './diet';
 import { addDays, fmtTime, fromMinutes, toMinutes } from './format';
 
 const weekday = new Intl.DateTimeFormat('ar-OM-u-nu-latn', { weekday: 'long', day: 'numeric', timeZone: 'UTC' });
@@ -44,6 +45,8 @@ export interface ScheduleInput {
   startDate: string;
   nights: string[];
   times: Times;
+  /** eating patterns at the table: a split dish gets its «set aside» prep note */
+  diets?: DietId[];
 }
 
 const shortName = (n: string) => n.replace(/\s*\(.*\)$/, '');
@@ -135,6 +138,9 @@ export function buildSchedule(input: ScheduleInput, gen: Generated): Map<string,
       });
     }
 
+    if (r.split?.prep && (input.diets ?? []).some((d) => dietFit(r, d).fit === 'split')) {
+      add(eve, { id: `split-${n}`, slot: 'evening', kind: 'prep', min: 2, night: n, recipeId: rid, text: r.split.prep, note: 'للحصة الخاصة' });
+    }
     r.prep.forEach((p, k) => {
       const base = { id: `prep-${n}-${k}`, kind: 'prep' as const, text: p.t, min: p.min, note: p.note, night: n, recipeId: rid };
       if (p.when === 'evening') add(eve, { ...base, slot: 'evening' });

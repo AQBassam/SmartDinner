@@ -42,7 +42,7 @@ describe('data: R01–R15 from Smart_Shopping_List_v2 + R16–R18', () => {
     expect(g.needs.filter((n) => n.storage === 'tight')).toEqual([]);
   });
   it('every purchasable ingredient is used by at least one recipe', () => {
-    const used = new Set(RECIPES.flatMap((r) => r.items.map((i) => i.i)));
+    const used = new Set(RECIPES.flatMap((r) => [...r.items.map((i) => i.i), ...Object.values(r.split?.alt ?? {}).flat().map((o) => o.i)]));
     expect(Object.values(ING).filter((i) => !i.staple && !i.nobuy && !used.has(i.id)).map((i) => i.id)).toEqual([]);
   });
   it('allergens are derived from ingredients, not typed per recipe', () => {

@@ -132,6 +132,17 @@ try:
         page.goto(URL + '#recipes'); page.wait_for_timeout(300)
         page.locator('main article button').first.click(); page.wait_for_selector('[role=dialog]'); page.wait_for_timeout(600)
         ax['recipe-sheet'] = axe('[role=dialog]')
+        # the same screens with members on both eating patterns: set-aside portion, badges, family editor
+        page.keyboard.press('Escape')
+        page.evaluate("() => { const s = JSON.parse(localStorage.getItem('sdg.state.v3')); s.special = [{group:'adults',diet:'vegan'},{group:'adults',diet:'pescoDairy'}]; localStorage.setItem('sdg.state.v3', JSON.stringify(s)); }")
+        page.goto(URL + '#today'); page.reload(); page.wait_for_timeout(500)
+        ax['diet-today'] = axe()
+        page.goto(URL + '#plan'); page.wait_for_timeout(400)
+        page.evaluate("document.querySelectorAll('main details').forEach(d => d.open = true)")
+        ax['diet-plan'] = axe()
+        page.goto(URL + '#recipes'); page.wait_for_timeout(300)
+        page.locator('main article button').first.click(); page.wait_for_selector('[role=dialog]'); page.wait_for_timeout(600)
+        ax['diet-recipe-sheet'] = axe('[role=dialog]')
         report['axe'] = ax
         for k, v in ax.items():
             ok(f'axe {k}: no WCAG A/AA violations', not v, '; '.join(f"{x['id']}×{x['n']} {x['html']} — {x['why']}" for x in v[:3]))

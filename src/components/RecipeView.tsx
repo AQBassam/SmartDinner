@@ -10,14 +10,18 @@ import { MAX_NIGHTS } from '../lib/state';
 import { HouseholdEditor } from './HouseholdEditor';
 import { RecipeImage } from './RecipeImage';
 import { Badge, Button, Checkbox, Icon, IconButton, Sheet, Switch, useToast } from './ui';
+import { DietFitLine, nightPlan, SpecialPortion, stepsWithSplit, cleanName } from './Diet';
+import type { NightPlan } from '../lib/diet';
 
-export function ingredientRows(r: Recipe, sv: number, optionalOff: string[] = []) {
+/** Quantities for the shared dish; with special members, an animal item is only for those who eat it. */
+export function ingredientRows(r: Recipe, sv: number, optionalOff: string[] = [], np?: NightPlan) {
   const off = new Set(optionalOff);
   return r.items.map((it) => {
     const ing = ING[it.i];
+    const who = np ? (np.eaters[it.i] ?? np.base) : sv;
     return {
       ing, opt: !!it.opt, off: !!it.opt && off.has(`${r.id}:${it.i}`), note: it.note,
-      text: fmtQty(ing, it.q === undefined ? undefined : scaledQty(ing, it.q, sv)),
+      text: who <= 0 ? '—' : fmtQty(ing, it.q === undefined ? undefined : scaledQty(ing, it.q, who)),
     };
   });
 }
@@ -33,7 +37,9 @@ export function RecipeSheet({ store, recipeId, kitchenFirst = false, onClose }: 
   if (!r) return null;
   const { state, set } = store;
   const sv = servings(state);
-  const rows = ingredientRows(r, sv, state.optionalOff);
+  const np = nightPlan(state, r.id);
+  const rows = ingredientRows(r, sv, state.optionalOff, np);
+  const steps = stepsWithSplit(r, np);
   const nights = state.nights.map((id, i) => (id === r.id ? i : -1)).filter((i) => i >= 0);
   const allergens = recipeAllergens(r, new Set(state.optionalOff));
   const conflict = recipeConflicts(r, state);
@@ -91,6 +97,8 @@ export function RecipeSheet({ store, recipeId, kitchenFirst = false, onClose }: 
           </p>
         )}
 
+        <DietFitLine recipe={r} state={state} />
+
         <div className="mt-4 flex flex-wrap gap-2">
           <Button variant="primary" icon="chef" className="min-w-[60%] flex-1" onClick={() => setKitchen(true)}>ابدأ التحضير خطوة بخطوة</Button>
           <PlanAction store={store} recipeId={r.id} />
@@ -131,6 +139,7 @@ export function RecipeSheet({ store, recipeId, kitchenFirst = false, onClose }: 
             </li>
           ))}
         </ul>
+        <SpecialPortion recipe={r} np={np} />
         {rows.some((x) => x.opt) && (
           <div className="mt-2 rounded-2xl border border-line bg-paper px-3 py-1">
             {rows.filter((x) => x.opt).map((x) => (
@@ -141,10 +150,11 @@ export function RecipeSheet({ store, recipeId, kitchenFirst = false, onClose }: 
 
         <h4 className="mt-6 mb-2 text-[16px] font-extrabold">الطريقة</h4>
         <ol className="space-y-2.5">
-          {r.steps.map((s, i) => (
-            <li key={i} className="flex gap-3 rounded-2xl border border-line bg-paper p-3">
-              <span className="num grid size-7 shrink-0 place-items-center rounded-full bg-teal-soft text-[13px] font-extrabold text-teal-deep">{i + 1}</span>
+          {steps.map((s, i) => (
+            <li key={i} className={`flex gap-3 rounded-2xl border p-3 ${s.special ? 'border-saffron/70 bg-saffron-soft/50' : 'border-line bg-paper'}`}>
+              <span className={`num grid size-7 shrink-0 place-items-center rounded-full text-[13px] font-extrabold ${s.special ? 'bg-saffron text-ink' : 'bg-teal-soft text-teal-deep'}`}>{i + 1}</span>
               <div className="flex-1 text-[15px] leading-relaxed">
+                {s.special && <b className="block text-[13px] text-copper">الحصة الخاصة</b>}
                 {s.t}
                 {s.min && <span className="ms-2 inline-flex"><Badge icon="timer"><span className="num">{s.min}</span> د</Badge></span>}
               </div>
@@ -156,6 +166,9 @@ export function RecipeSheet({ store, recipeId, kitchenFirst = false, onClose }: 
           {r.prep.length > 0 && (
             <More title={`التجهيز المسبق: ${r.prep.reduce((x, p) => x + p.min, 0)} دقيقة خارج وقت العشاء`} icon="snow" open>
               <ul className="space-y-2">
+                {np.splitMembers > 0 && r.split?.prep && (
+                  <li><span className="me-1.5 rounded-full bg-saffron-soft px-2 py-0.5 text-[12px] font-bold text-copper">للحصة الخاصة</span>{r.split.prep}</li>
+                )}
                 {r.prep.map((p, i) => (
                   <li key={i}>
                     <span className="me-1.5 rounded-full bg-ice-soft px-2 py-0.5 text-[12px] font-bold text-ice">{PREP_WHEN[p.when]}، <span className="num">{p.min}</span> د</span>
@@ -172,7 +185,7 @@ export function RecipeSheet({ store, recipeId, kitchenFirst = false, onClose }: 
         </div>
         <p className="mt-4 text-[12px] text-muted">المكونات المصنّعة تختلف بين العلامات؛ الملصق هو المرجع عند وجود حساسية.</p>
       </Sheet>
-      {kitchen && <KitchenMode recipe={r} sv={sv} optionalOff={state.optionalOff} onClose={() => setKitchen(false)} />}
+      {kitchen && <KitchenMode recipe={r} sv={sv} optionalOff={state.optionalOff} np={np} onClose={() => setKitchen(false)} />}
     </>
   );
 }
@@ -251,14 +264,16 @@ function beep() {
   navigator.vibrate?.([300, 150, 300]);
 }
 
-function KitchenMode({ recipe, sv, optionalOff, onClose }: { recipe: Recipe; sv: number; optionalOff: string[]; onClose: () => void }) {
+function KitchenMode({ recipe, sv, optionalOff, np, onClose }: { recipe: Recipe; sv: number; optionalOff: string[]; np: NightPlan; onClose: () => void }) {
   const [i, setI] = useState(-1); // -1 = ingredients screen
   const [endsAt, setEndsAt] = useState<number | null>(null);
   const [now, setNow] = useState(Date.now());
   const [wake, setWake] = useState<'on' | 'off' | 'na'>('off');
   const lock = useRef<WakeLockSentinel | null>(null);
-  const rows = ingredientRows(recipe, sv, optionalOff).filter((x) => !x.off);
-  const step = i >= 0 ? recipe.steps[i] : null;
+  const rows = ingredientRows(recipe, sv, optionalOff, np).filter((x) => !x.off);
+  const steps = stepsWithSplit(recipe, np);
+  const subs = np.subs.filter((x) => x.to);
+  const step = i >= 0 ? steps[i] : null;
 
   useEffect(() => {
     const req = async () => {
@@ -270,7 +285,7 @@ function KitchenMode({ recipe, sv, optionalOff, onClose }: { recipe: Recipe; sv:
     document.addEventListener('visibilitychange', onVis);
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
-      if (e.key === 'ArrowLeft') setI((x) => Math.min(recipe.steps.length - 1, x + 1));
+      if (e.key === 'ArrowLeft') setI((x) => Math.min(steps.length - 1, x + 1));
       if (e.key === 'ArrowRight') setI((x) => Math.max(-1, x - 1));
     };
     document.addEventListener('keydown', onKey);
@@ -281,7 +296,7 @@ function KitchenMode({ recipe, sv, optionalOff, onClose }: { recipe: Recipe; sv:
       document.body.style.overflow = '';
       lock.current?.release().catch(() => {});
     };
-  }, [onClose, recipe.steps.length]);
+  }, [onClose, steps.length]);
 
   useEffect(() => {
     if (endsAt === null) return;
@@ -305,10 +320,10 @@ function KitchenMode({ recipe, sv, optionalOff, onClose }: { recipe: Recipe; sv:
           <p className="truncate text-[15px] font-bold">{recipe.title}</p>
           <p className="text-[12px] text-white/70">{wake === 'on' ? 'الشاشة ستبقى مضاءة' : wake === 'na' ? 'المتصفح لا يدعم إبقاء الشاشة مضاءة' : ''}</p>
         </div>
-        <span className="num text-[14px] text-white/80">{i < 0 ? 'المقادير' : `${i + 1}/${recipe.steps.length}`}</span>
+        <span className="num text-[14px] text-white/80">{i < 0 ? 'المقادير' : `${i + 1}/${steps.length}`}</span>
       </div>
       <div className="mx-4 mt-3 h-1.5 overflow-hidden rounded-full bg-white/15">
-        <div className="h-full bg-teal-bright transition-all" style={{ width: `${((i + 1) / recipe.steps.length) * 100}%` }} />
+        <div className="h-full bg-teal-bright transition-all" style={{ width: `${((i + 1) / steps.length) * 100}%` }} />
       </div>
 
       <div className="flex-1 overflow-y-auto px-5 py-6">
@@ -323,9 +338,25 @@ function KitchenMode({ recipe, sv, optionalOff, onClose }: { recipe: Recipe; sv:
                 </li>
               ))}
             </ul>
+            {subs.length > 0 && (
+              <>
+                <h3 className="mt-6 mb-3 text-[18px] font-extrabold text-[#f3d27f]">للحصة الخاصة</h3>
+                <ul className="space-y-2 text-[19px] leading-snug">
+                  {subs.map((x) => (
+                    <li key={`${x.from}:${x.to!.i}`} className="flex justify-between gap-3 border-b border-white/10 pb-2">
+                      <span>{cleanName(ING[x.to!.i].name)}</span>
+                      <span className="shrink-0 font-bold text-[#9fe3ef]">{fmtQty(ING[x.to!.i], x.to!.q * x.servings / 5)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
           </>
         ) : (
-          <p className="text-[26px] font-bold leading-[1.7] sm:text-[30px]">{step!.t}</p>
+          <>
+            {step!.special && <p className="mb-2 text-[16px] font-extrabold text-[#f3d27f]">الحصة الخاصة</p>}
+            <p className="text-[26px] font-bold leading-[1.7] sm:text-[30px]">{step!.t}</p>
+          </>
         )}
       </div>
 
@@ -347,7 +378,7 @@ function KitchenMode({ recipe, sv, optionalOff, onClose }: { recipe: Recipe; sv:
 
       <div className="grid grid-cols-2 gap-3 px-5 pb-[calc(env(safe-area-inset-bottom)+16px)]">
         <button disabled={i < 0} onClick={() => setI(i - 1)} className="min-h-16 rounded-2xl bg-white/10 text-[18px] font-bold disabled:opacity-30">السابق</button>
-        {i < recipe.steps.length - 1
+        {i < steps.length - 1
           ? <button onClick={() => setI(i + 1)} className="min-h-16 rounded-2xl bg-white text-[18px] font-extrabold text-teal-deep">{i < 0 ? 'ابدأ الطهي' : 'التالي'}</button>
           : <button onClick={onClose} className="min-h-16 rounded-2xl bg-white text-[18px] font-extrabold text-teal-deep">بالهناء والعافية ✓</button>}
       </div>

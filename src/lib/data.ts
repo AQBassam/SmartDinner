@@ -46,6 +46,8 @@ export const IngredientSchema = z.object({
   price: Price.optional(),
   allergens: z.array(AllergenEnum).optional(),
   mayContain: z.array(AllergenEnum).optional(),
+  /** animal-food class, the basis of the family members' eating patterns (see diet.ts) */
+  animal: z.enum(['meat', 'poultry', 'fish', 'seafood', 'egg', 'dairy']).optional(),
 });
 export type SoldT = z.infer<typeof Sold>;
 
@@ -71,6 +73,19 @@ export const RecipeSchema = z.object({
     min: z.number().int().positive().max(60),
     note: z.string().optional(),
   })).default([]),
+  /**
+   * How a member with a restricted eating pattern shares this dinner: before step `at` their portion is set aside (`t`),
+   * and each animal item listed in `alt` is replaced by the first allowed option (q for 5 servings, `t` how), or simply
+   * left out when the list is empty. An animal item missing from `alt` cannot be split off: that member gets a separate dish.
+   */
+  split: z.object({
+    at: z.number().int().min(0),
+    t: z.string(),
+    alt: z.record(z.string(), z.array(z.object({ i: z.string(), q: z.number().positive(), t: z.string() }))),
+    min: z.number().int().min(0).max(30),
+    tool: z.string().optional(),
+    prep: z.string().optional(),
+  }).optional(),
 });
 
 export type Ingredient = z.infer<typeof IngredientSchema>;
@@ -151,6 +166,21 @@ export function validateData(): string[] {
     if (r.prep.some((p) => p.when === 'evening' && /الأرز/.test(p.t) && /يُطهى/.test(p.t))) problems.push(`${r.id}: cooked rice must not be prepped ahead`);
     for (const p of r.prep) if (/^(قطّع|اخلط|اغسل|اسلق|ضع|حضّر)/.test(p.t)) problems.push(`${r.id}: gendered imperative in prep`);
     for (const st of r.steps) if (/^(قطّع|اطه|اخلط|سخّن|صفِّ|اغسل|شوّح|أضف|اسلق|حمّر|ضع|قدّم|احشُ|وزّع|اخبز|تبّل|افتح|غطِّ)/.test(st.t)) problems.push(`${r.id}: gendered imperative step «${st.t.slice(0, 20)}»`);
+  }
+  for (const r of RECIPES) {
+    const meatless = r.items.every((it) => !['meat', 'poultry', 'fish', 'seafood'].includes(ING[it.i]?.animal ?? ''));
+    if (r.tags.includes('vegetarian') !== meatless) problems.push(`${r.id}: «vegetarian» tag does not match its ingredients`);
+    if (!r.split) continue;
+    if (r.split.at >= r.steps.length) problems.push(`${r.id}: split.at beyond the steps`);
+    for (const [from, opts] of Object.entries(r.split.alt)) {
+      if (!r.items.some((it) => it.i === from)) problems.push(`${r.id}: split replaces ${from}, not in the recipe`);
+      if (!ING[from]?.animal) problems.push(`${r.id}: split replaces ${from}, which is not an animal food`);
+      for (const o of opts) {
+        if (!ING[o.i]) problems.push(`${r.id}: split option ${o.i} unknown`);
+        else if (ING[o.i].unit === 'none') problems.push(`${r.id}: split option ${o.i} has no quantity unit`);
+        if (o.i === from) problems.push(`${r.id}: split option replaces ${from} with itself`);
+      }
+    }
   }
   for (const id of DEFAULT_ORDER) if (!RECIPE[id]) problems.push(`defaultOrder: unknown ${id}`);
   return problems;

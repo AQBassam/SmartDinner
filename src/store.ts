@@ -4,7 +4,7 @@ import { generate, type Generated, type PlanInput } from './lib/engine';
 import { todayISO } from './lib/format';
 import { buildSchedule, scheduleEvents, type CalendarEvent, type DayPlan } from './lib/schedule';
 export { togglePrep } from './lib/schedule';
-import { loadState, members, servings, STORAGE_KEY, type AppState, type ImportSource } from './lib/state';
+import { dietMembers, loadState, members, servings, STORAGE_KEY, type AppState, type ImportSource } from './lib/state';
 
 function safeStorage(): Storage | null {
   try {
@@ -20,7 +20,7 @@ function safeStorage(): Storage | null {
 
 export function planInput(state: AppState, today = todayISO()): PlanInput {
   return {
-    servings: servings(state), members: members(state), startDate: state.startDate, nights: state.nights,
+    servings: servings(state), members: members(state), special: dietMembers(state), startDate: state.startDate, nights: state.nights,
     optionalOff: state.optionalOff, have: state.have, stock: state.stock, priceBook: state.priceBook,
     storeMode: state.storeMode, today,
   };
@@ -58,10 +58,10 @@ export function useStore(): Store {
   const today = todayISO();
   const input = useMemo(() => planInput(state, today), [state, today]);
   const gen = useMemo(() => generate(input), [input]);
-  const days = useMemo(() => buildSchedule({ startDate: state.startDate, nights: state.nights, times: state.times }, gen), [state.startDate, state.nights, state.times, gen]);
+  const days = useMemo(() => buildSchedule({ startDate: state.startDate, nights: state.nights, times: state.times, diets: state.special.map((m) => m.diet) }, gen), [state.startDate, state.nights, state.times, state.special, gen]);
   const events = useMemo(
-    () => scheduleEvents({ startDate: state.startDate, nights: state.nights, times: state.times }, gen, days, state.shopTime),
-    [state.startDate, state.nights, state.times, state.shopTime, gen, days],
+    () => scheduleEvents({ startDate: state.startDate, nights: state.nights, times: state.times, diets: state.special.map((m) => m.diet) }, gen, days, state.shopTime),
+    [state.startDate, state.nights, state.times, state.special, state.shopTime, gen, days],
   );
 
   return { state, gen, input, days, events, set, replace: setState, persisted: !!storage.current, migratedFrom: boot.migratedFrom };
