@@ -4,6 +4,7 @@ import { defaultState, exportBackup, importBackup } from '../lib/state';
 import type { TabId } from '../App';
 import { addDays, fmtTime } from '../lib/format';
 import { minutesOf } from '../lib/schedule';
+import { buildShare, encodeShare } from '../lib/share';
 import type { Store } from '../store';
 import { useInstall } from '../lib/install';
 import { InstallGuide } from './InstallGuide';
@@ -42,6 +43,15 @@ export function MoreTab({ store, go }: { store: Store; go: (t: TabId) => void })
   const doExport = () => {
     download(`دليل-العشاء-نسخة-${new Date().toISOString().slice(0, 10)}.json`, exportBackup(state), 'application/json;charset=utf-8');
     toast('جُهّزت النسخة الاحتياطية.');
+  };
+  const copyForLuban = async () => {
+    try {
+      const code = await encodeShare(buildShare({ startDate: state.startDate, nights: state.nights, times: state.times, diets: state.special.map((m) => m.diet) }, gen, state.shopTime));
+      await navigator.clipboard.writeText(code);
+      toast('نُسخ رمز لُبان. الصقه في صفحة إعدادات لُبان.');
+    } catch {
+      toast('تعذر النسخ في هذا المتصفح.');
+    }
   };
   const doImport = async (f: File) => {
     try {
@@ -185,6 +195,11 @@ export function MoreTab({ store, go }: { store: Store; go: (t: TabId) => void })
             toast('أُعيد ضبط الدليل.', { label: 'تراجع', run: () => replace(before) });
           }}>إعادة ضبط كاملة</Button>
         </div>
+      </Section>
+
+      <Section icon="home" title="عرض الخطة على شاشة لُبان">
+        <p className="text-muted">لُبان شاشة توقف وواجهة للتلفزيون. تعرض بطاقة «عشاء الليلة» ومهام اليوم بمواعيدها. الرمز يحمل دورة الخطة الحالية (<span className="num">{state.nights.length}</span> ليلة)، فتعيدها الشاشة وحدها كلما اكتملت، ولا تحتاج إلى لصقه ثانيةً إلا إذا غيّرت الوجبات أو المواعيد. لا يحمل الرمز أسماء ولا أسعارًا ولا قائمة تسوق.</p>
+        <Button variant="soft" icon="copy" className="mt-3 w-full" onClick={copyForLuban}>نسخ رمز لُبان</Button>
       </Section>
 
       <Section icon="download" title="النسخ الاحتياطي والنقل بين الأجهزة">

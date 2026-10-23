@@ -47,6 +47,8 @@ export interface ScheduleInput {
   times: Times;
   /** eating patterns at the table: a split dish gets its «set aside» prep note */
   diets?: DietId[];
+  /** how a dish is named inside generated sentences; the weekday of its night by default */
+  dayLabel?: (night: number) => string;
 }
 
 const shortName = (n: string) => n.replace(/\s*\(.*\)$/, '');
@@ -78,7 +80,7 @@ export function buildSchedule(input: ScheduleInput, gen: Generated): Map<string,
     const d = day(b.date);
     d.shopBatch = b.index;
     const dishOf = (night: number) => ({ night, recipeId: input.nights[night - 1] });
-    const label = (night: number) => `${RECIPE[input.nights[night - 1]]?.title ?? ''} (${weekday.format(new Date(`${nightDate(input.startDate, night)}T00:00:00Z`))})`;
+    const label = (night: number) => `${RECIPE[input.nights[night - 1]]?.title ?? ''} (${input.dayLabel?.(night) ?? weekday.format(new Date(`${nightDate(input.startDate, night)}T00:00:00Z`))})`;
     for (const l of b.lines) {
       // fresh meat bought for several nights: split into labelled flat bags (frozen products stay in their own bag)
       if (l.cat !== 'protein' || l.have || l.ing.frozen || !l.ing.thaw || l.portions.length === 0) continue;
