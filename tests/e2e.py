@@ -307,6 +307,52 @@ try:
         ok('diet: fixing keeps the first and replaces the repeat', st['nights'][1] == 'oven_tortilla' and st['nights'][3] != 'oven_tortilla' and dp.get_by_text('طبق منفصل ثانٍ في الأسبوع').count() == 0)
         dc.close()
 
+        # linked to a Luban screen: the plan goes to Luban's server at once and after every change; unlinking deletes it
+        import base64, hashlib, re
+        lc = b.new_context(viewport={'width': 390, 'height': 844}, locale='ar-OM', timezone_id='Asia/Muscat')
+        lp = lc.new_page()
+        lp.on('console', lambda m: m.type in ('error', 'warning') and errors.append(m.text))
+        lp.on('pageerror', lambda e: errors.append(str(e)))
+        sent = []
+        cors = {'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'PUT, DELETE', 'Access-Control-Allow-Headers': 'Content-Type, X-Luban-Key'}
+        def luban(route):
+            r = route.request
+            if r.method == 'OPTIONS':
+                return route.fulfill(status=204, headers=cors)
+            sent.append((r.method, r.headers.get('x-luban-key', ''), r.post_data or '', r.url))
+            route.fulfill(status=200, content_type='application/json', headers=cors, body=json.dumps({'ok': True, 'at': int(time.time())}))
+        lp.route('https://luban.bassamailab.xyz/**', luban)
+        lp.goto(URL); lp.get_by_role('button', exact=True, name='تخطٍّ').click(); lp.wait_for_selector('text=جهّز الليلة لعشاء الغد')
+        lp.goto(URL + '#more'); lp.wait_for_timeout(300)
+        lp.locator('summary', has_text='عرض الخطة على شاشة لُبان').click()
+        lp.get_by_role('button', exact=True, name='اربط بشاشة لُبان').click()
+        lp.wait_for_selector('text=أُرسلت الخطة إلى لُبان')
+        code = lp.get_by_test_id('luban-code').inner_text()
+        puts = [s for s in sent if s[0] == 'PUT']
+        key = puts[0][1] if puts else ''
+        rid = base64.urlsafe_b64encode(hashlib.sha256(key.encode()).digest()).decode()[:22]
+        ok('luban: linking sends the plan once, the key in a header and not in the address',
+           len(puts) == 1 and re.fullmatch(r'[A-Za-z0-9_-]{43}', key) and key not in puts[0][3] and puts[0][3] == 'https://luban.bassamailab.xyz/v1/dinner')
+        ok('luban: the link code is the read id derived from the key', code == 'LBNL.' + rid)
+        plan = json.loads(puts[0][2]) if puts else {}
+        ok('luban: what is sent is the plan only (15 nights, no prices, no household)', plan.get('n') == 15 and 'priceBook' not in puts[0][2] and 'household' not in puts[0][2])
+        lp.screenshot(path=SHOTS / '30-luban-linked.png')
+        st = json.loads(lp.evaluate("localStorage.getItem('sdg.state.v3')"))
+        st['nights'][0], st['nights'][1] = st['nights'][1], st['nights'][0]
+        lp.evaluate("s => localStorage.setItem('sdg.state.v3', s)", json.dumps(st, ensure_ascii=False)); lp.reload()
+        lp.wait_for_timeout(4500)
+        puts = [s for s in sent if s[0] == 'PUT']
+        ok('luban: a changed plan is sent again by itself', len(puts) == 2 and json.loads(puts[1][2])['d'][0]['r'][0] != plan['d'][0]['r'][0])
+        lp.wait_for_timeout(3500)
+        ok('luban: an unchanged plan is not sent again', len([s for s in sent if s[0] == 'PUT']) == 2)
+        lp.locator('main').get_by_role('button', exact=True, name='فك الربط').click()
+        lp.get_by_role('dialog').get_by_role('button', exact=True, name='فك الربط').click()
+        lp.wait_for_selector('text=اربط بشاشة لُبان')
+        dels = [s for s in sent if s[0] == 'DELETE']
+        ok('luban: unlinking deletes the plan on the server with the same key', len(dels) == 1 and dels[0][1] == key
+           and lp.evaluate("localStorage.getItem('sdg.luban.v1')") is None)
+        lc.close()
+
         b.close()
 finally:
     srv.terminate()

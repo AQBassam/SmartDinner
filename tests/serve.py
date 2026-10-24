@@ -1,7 +1,7 @@
 """Static server for dist/ that sends the same security headers as deploy/nginx.conf."""
 import http.server, socketserver, sys, functools, gzip, os
 CSP = ("default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; "
-       "connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'self'; "
+       "connect-src 'self' https://luban.bassamailab.xyz; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'self'; "
        "frame-ancestors 'none'; object-src 'none'")
 class H(http.server.SimpleHTTPRequestHandler):
     extensions_map = {**http.server.SimpleHTTPRequestHandler.extensions_map, '.webmanifest': 'application/manifest+json', '.js': 'text/javascript'}

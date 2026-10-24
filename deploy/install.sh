@@ -51,7 +51,17 @@ say "5/5 فحص إعداد nginx وإعادة تحميله"
 if [ "${SKIP_NGINX:-0}" = 1 ]; then
   echo "(تخطٍّ: وضع الاختبار)"
 else
-  nginx -t || fail "nginx -t رفض الإعداد؛ الموقع السابق ما زال يعمل. للتراجع: sudo ./deploy/rollback.sh"
+  # the security headers travel with the release (the CSP names the servers the page may talk to)
+  SNIP=/etc/nginx/snippets/dinner-security-headers.conf
+  if ! cmp -s "$HERE/deploy/nginx/dinner-security-headers.conf" "$SNIP"; then
+    [ -f "$SNIP" ] && cp -a "$SNIP" "$SNIP.bak-$STAMP"
+    cp "$HERE/deploy/nginx/dinner-security-headers.conf" "$SNIP"
+    echo "حُدّثت ترويسات الأمان (النسخة السابقة: $SNIP.bak-$STAMP)"
+  fi
+  if ! nginx -t; then
+    [ -f "$SNIP.bak-$STAMP" ] && cp -a "$SNIP.bak-$STAMP" "$SNIP"
+    fail "nginx -t رفض الإعداد؛ الموقع السابق ما زال يعمل. للتراجع: sudo ./deploy/rollback.sh"
+  fi
   systemctl reload nginx
   sleep 2  # reload is asynchronous: give the new workers a moment before anyone tests
 fi

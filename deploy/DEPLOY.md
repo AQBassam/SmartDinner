@@ -29,8 +29,10 @@ curl -fLO https://github.com/AQBassam/SmartDinner/releases/download/v$V/dinner-r
 sha256sum -c dinner-release-$V.tar.gz.sha256          # المتوقع: OK
 tar -xzf dinner-release-$V.tar.gz && cd dinner-release-$V
 bash deploy/install.sh                                  # تحقق الملفات، ثم تبديل current، ثم nginx -t وإعادة التحميل
-bash deploy/verify.sh                                   # المتوقع: 14 ناجح
+bash deploy/verify.sh                                   # المتوقع: 15 ناجح
 ```
+
+من الإصدار 3.9.0: `install.sh` ينسخ `deploy/nginx/dinner-security-headers.conf` إلى `/etc/nginx/snippets/` إن تغيّر، ويحفظ السابق بجانبه (`.bak-<الوقت>`)، ويعيده إن رفض `nginx -t` الإعداد.
 
 **التراجع:** `bash deploy/rollback.sh` يعيد الرابط `current` إلى الإصدار السابق في ثانية.
 

@@ -1,10 +1,11 @@
-import { useRef, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { ALLERGEN_ORDER, ALLERGENS, INGREDIENTS, RECIPE, RECIPES } from '../lib/data';
 import { defaultState, exportBackup, importBackup } from '../lib/state';
 import type { TabId } from '../App';
 import { addDays, fmtTime } from '../lib/format';
 import { minutesOf } from '../lib/schedule';
-import { buildShare, encodeShare } from '../lib/share';
+import { encodeShare } from '../lib/share';
+import { link, linkCode, sharePlan, unlink, useLink } from '../lib/luban';
 import type { Store } from '../store';
 import { useInstall } from '../lib/install';
 import { InstallGuide } from './InstallGuide';
@@ -44,15 +45,40 @@ export function MoreTab({ store, go }: { store: Store; go: (t: TabId) => void })
     download(`دليل-العشاء-نسخة-${new Date().toISOString().slice(0, 10)}.json`, exportBackup(state), 'application/json;charset=utf-8');
     toast('جُهّزت النسخة الاحتياطية.');
   };
+  const luban = useLink();
+  const [lubanOpen] = useState(() => !!luban); // opened when linked, then left as the reader leaves it
   const copyForLuban = async () => {
     try {
-      const code = await encodeShare(buildShare({ startDate: state.startDate, nights: state.nights, times: state.times, diets: state.special.map((m) => m.diet) }, gen, state.shopTime));
+      const code = await encodeShare(sharePlan({ state, gen }));
       await navigator.clipboard.writeText(code);
-      toast('نُسخ رمز لُبان. الصقه في صفحة إعدادات لُبان.');
+      toast('نُسخ رمز الخطة. الصقه في صفحة إعدادات لُبان.');
     } catch {
       toast('تعذر النسخ في هذا المتصفح.');
     }
   };
+  const copyLink = async () => {
+    if (!luban) return;
+    try {
+      await navigator.clipboard.writeText(linkCode(luban.id));
+      toast('نُسخ رمز الربط. الصقه في صفحة إعدادات لُبان ثم «حفظ».');
+    } catch {
+      toast('تعذر النسخ في هذا المتصفح.');
+    }
+  };
+  const doLink = async () => {
+    try {
+      const l = await link(JSON.stringify(sharePlan({ state, gen })));
+      toast(l.error ? 'رُبطت، لكن تعذّر الإرسال الآن؛ يُعاد بعد دقيقة.' : 'رُبطت الخطة بشاشة لُبان. انسخ رمز الربط والصقه في إعدادات لُبان.');
+    } catch {
+      toast('تعذّر الربط في هذا المتصفح.');
+    }
+  };
+  const doUnlink = async () => {
+    if (!await ask({ title: 'فك الربط بشاشة لُبان', body: 'تُحذف الخطة من خادم لُبان، وتتوقف الشاشة عن تلقي التعديلات. يبقى ما عندها حتى تزيله من إعدادات لُبان.', action: 'فك الربط' })) return;
+    await unlink();
+    toast('فُك الربط وحُذفت الخطة من خادم لُبان.');
+  };
+  const clock = (ms: number) => new Intl.DateTimeFormat('ar-OM-u-nu-latn', { hour: 'numeric', minute: '2-digit' }).format(ms);
   const doImport = async (f: File) => {
     try {
       const { state: s, from, notes } = importBackup(await f.text());
@@ -197,9 +223,36 @@ export function MoreTab({ store, go }: { store: Store; go: (t: TabId) => void })
         </div>
       </Section>
 
-      <Section icon="home" title="عرض الخطة على شاشة لُبان">
-        <p className="text-muted">لُبان شاشة توقف وواجهة للتلفزيون. تعرض بطاقة «عشاء الليلة» ومهام اليوم بمواعيدها. الرمز يحمل دورة الخطة الحالية (<span className="num">{state.nights.length}</span> ليلة)، فتعيدها الشاشة وحدها كلما اكتملت، ولا تحتاج إلى لصقه ثانيةً إلا إذا غيّرت الوجبات أو المواعيد. لا يحمل الرمز أسماء ولا أسعارًا ولا قائمة تسوق.</p>
-        <Button variant="soft" icon="copy" className="mt-3 w-full" onClick={copyForLuban}>نسخ رمز لُبان</Button>
+      <Section icon="home" title="عرض الخطة على شاشة لُبان" open={lubanOpen}>
+        <p className="text-muted">لُبان شاشة توقف وواجهة للتلفزيون. تعرض بطاقة «عشاء الليلة» ومهام اليوم بمواعيدها، وتعيد دورة الخطة (<span className="num">{state.nights.length}</span> ليلة) وحدها كلما اكتملت.</p>
+        {luban ? (
+          <>
+            <p className="mt-3 font-bold text-teal-deep">مرتبطة بشاشة لُبان</p>
+            <p className="mt-1 text-muted">الصق هذا الرمز مرة واحدة في صفحة إعدادات لُبان على الجوال (تبويب «البيت» ← خطة العشاء)، ثم «حفظ». بعدها يصل كل تعديل في الخطة إلى الشاشة خلال 10 دقائق.</p>
+            <div className="mt-2 flex items-center gap-2 rounded-xl border border-line bg-teal-soft/40 px-3 py-2">
+              <code dir="ltr" className="num min-w-0 flex-1 break-all text-[13px] leading-snug" data-testid="luban-code">{linkCode(luban.id)}</code>
+              <Button variant="soft" icon="copy" onClick={copyLink}>نسخ</Button>
+            </div>
+            <p className={`mt-2 text-[13.5px] ${luban.error ? 'text-danger' : 'text-muted'}`} role="status">
+              {luban.error ? 'تعذّر الإرسال إلى لُبان؛ يُعاد بعد دقيقة.'
+                : luban.sentAt ? <>أُرسلت الخطة إلى لُبان ✓ الساعة <span className="num">{clock(luban.sentAt)}</span></>
+                : 'تُرسل الخطة الآن…'}
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <Button variant="outline" onClick={copyForLuban}>نسخ رمز الخطة</Button>
+              <Button variant="outline" onClick={doUnlink}>فك الربط</Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="mt-2 text-muted"><b>الربط</b> يرسل الخطة إلى خادم لُبان عند كل تعديل، فلا تلصق شيئًا بعد المرة الأولى. أو <b>رمز الخطة</b>: يُلصق من جديد كلما غيّرت الوجبات أو المواعيد، ولا يغادر هذا الجهاز إلا بيدك.</p>
+            <p className="mt-2 text-[13px] text-muted">في الحالتين: أطباق ومواعيد ومهام فقط، بلا أسماء ولا أسعار ولا قائمة تسوق.</p>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <Button variant="primary" icon="link" onClick={doLink}>اربط بشاشة لُبان</Button>
+              <Button variant="soft" icon="copy" onClick={copyForLuban}>نسخ رمز الخطة</Button>
+            </div>
+          </>
+        )}
       </Section>
 
       <Section icon="download" title="النسخ الاحتياطي والنقل بين الأجهزة">
@@ -214,7 +267,7 @@ export function MoreTab({ store, go }: { store: Store; go: (t: TabId) => void })
 
       <Section icon="info" title="عن الدليل وحدوده">
         <List items={[
-          'لا حساب ولا خادم: لا تغادر بياناتك هذا الجهاز.',
+          'لا حساب ولا خادم: لا تغادر بياناتك هذا الجهاز. الاستثناء الوحيد إن ربطت الخطة بشاشة لُبان: تُرسل أطباقها ومواعيدها ومهامها إلى خادم لُبان، بلا أسماء ولا أسعار، وتُحذف منه عند فك الربط.',
           'الكميات محسوبة لحصص متوسطة لخمسة أفراد وتُحجَّم آليًا؛ الثوم والبصل والليمون والزيت تُحجَّم جزئيًا لأنها لا تتضاعف مع عدد الأفراد.',
           'الأسعار الموثقة صحيحة بتاريخها فقط، والتقديرات للتخطيط. لا توجد مقارنة آلية بين المتاجر.',
           'التذكيرات المضمونة هي التي تُضاف إلى تقويم الهاتف (من تبويب الخطة)، لا الصفحة نفسها.',

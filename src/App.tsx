@@ -10,6 +10,7 @@ import { ConfirmProvider, Icon, ToastProvider } from './components/ui';
 import { arCount, fmtDate, PERSON, todayISO } from './lib/format';
 import { members } from './lib/state';
 import { useStore } from './store';
+import { useLubanSync } from './lib/luban';
 
 const BudgetTab = lazy(() => import('./components/BudgetTab').then((m) => ({ default: m.BudgetTab })));
 
@@ -38,6 +39,7 @@ function greeting(): string {
 
 export default function App() {
   const store = useStore();
+  useLubanSync(store); // linked to a Luban screen: the plan follows every change
   const [tab, setTab] = useState<TabId>(readHash);
   const [recipeId, setRecipeId] = useState<string | null>(null);
   const [migrationSeen, setMigrationSeen] = useState(false);

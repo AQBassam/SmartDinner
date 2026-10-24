@@ -18,6 +18,7 @@ echo "فحص $BASE"
 h=$(hdr /);                      has "$h" '^HTTP/[0-9.]* 200' && ok "الصفحة الرئيسية 200" || bad "الصفحة الرئيسية" "$(head -1 <<<"$h")"
 has "$h" 'content-type: text/html' && ok "نوع المحتوى HTML" || bad "نوع المحتوى" "$(grep -i content-type <<<"$h")"
 has "$h" "content-security-policy: default-src 'self'" && ok "سياسة CSP موجودة" || bad "CSP" "مفقودة"
+has "$h" "connect-src 'self' https://luban.bassamailab.xyz;" && ok "CSP تسمح بخادم لُبان وحده (الربط بالشاشة)" || bad "CSP connect-src" "$(grep -io "connect-src[^;]*" <<<"$h")"
 has "$h" 'x-content-type-options: nosniff' && ok "nosniff" || bad "nosniff" "مفقود"
 has "$h" 'cache-control: no-cache' && ok "الصفحة لا تُخزَّن قديمة" || bad "Cache-Control للصفحة" "$(grep -i cache-control <<<"$h")"
 
